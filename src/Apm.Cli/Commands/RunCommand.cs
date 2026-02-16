@@ -1,30 +1,41 @@
-using System.ComponentModel;
+using System.CommandLine;
+using System.CommandLine.Invocation;
 using Spectre.Console;
-using Spectre.Console.Cli;
 using Apm.Cli.Core;
 using Apm.Cli.Utils;
 
 namespace Apm.Cli.Commands;
 
-public sealed class RunSettings : CommandSettings
+public static class RunCommand
 {
-    [CommandArgument(0, "[script]")]
-    [Description("Script name to run")]
-    public string? ScriptName { get; set; }
+    public static Command Create()
+    {
+        var scriptArg = new Argument<string?>("script", "Script name to run")
+        {
+            Arity = ArgumentArity.ZeroOrOne,
+        };
+        var paramOpt = new Option<string[]>(["--param", "-p"], "Parameter in format name=value")
+        {
+            AllowMultipleArgumentsPerToken = true,
+        };
 
-    [CommandOption("-p|--param")]
-    [Description("Parameter in format name=value")]
-    public string[]? Params { get; set; }
-}
+        var command = new Command("run", "▶️  Run a script with parameters");
+        command.AddArgument(scriptArg);
+        command.AddOption(paramOpt);
+        command.SetHandler(ctx =>
+        {
+            var script = ctx.ParseResult.GetValueForArgument(scriptArg);
+            var parameters = ctx.ParseResult.GetValueForOption(paramOpt);
+            ctx.ExitCode = Execute(script, parameters);
+        });
+        return command;
+    }
 
-public sealed class RunCommand : Command<RunSettings>
-{
-    public override int Execute(CommandContext context, RunSettings settings, CancellationToken cancellation)
+    internal static int Execute(string? scriptName, string[]? paramValues)
     {
         try
         {
             var scriptRunner = new ScriptRunner();
-            var scriptName = settings.ScriptName;
 
             // Default to 'start' script if none specified
             if (string.IsNullOrEmpty(scriptName))
@@ -62,9 +73,9 @@ public sealed class RunCommand : Command<RunSettings>
 
             // Parse parameters
             var parameters = new Dictionary<string, string>();
-            if (settings.Params is not null)
+            if (paramValues is not null)
             {
-                foreach (var p in settings.Params)
+                foreach (var p in paramValues)
                 {
                     if (p.Contains('='))
                     {

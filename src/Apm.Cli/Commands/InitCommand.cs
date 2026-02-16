@@ -1,31 +1,38 @@
-using System.ComponentModel;
+using System.CommandLine;
+using System.CommandLine.Invocation;
 using System.Diagnostics;
 using Spectre.Console;
-using Spectre.Console.Cli;
 using Apm.Cli.Models;
 using Apm.Cli.Utils;
 
 namespace Apm.Cli.Commands;
 
-public sealed class InitSettings : CommandSettings
+public static class InitCommand
 {
-    [CommandArgument(0, "[name]")]
-    [Description("Project name")]
-    public string? ProjectName { get; set; }
+    public static Command Create()
+    {
+        var nameArg = new Argument<string?>("name", "Project name")
+        {
+            Arity = ArgumentArity.ZeroOrOne,
+        };
+        var yesOpt = new Option<bool>(["--yes", "-y"], "Skip confirmation prompts");
 
-    [CommandOption("-y|--yes")]
-    [Description("Skip confirmation prompts")]
-    public bool Yes { get; set; }
-}
+        var command = new Command("init", "🚀 Initialize a new APM project");
+        command.AddArgument(nameArg);
+        command.AddOption(yesOpt);
+        command.SetHandler(ctx =>
+        {
+            var name = ctx.ParseResult.GetValueForArgument(nameArg);
+            var yes = ctx.ParseResult.GetValueForOption(yesOpt);
+            ctx.ExitCode = Execute(name, yes);
+        });
+        return command;
+    }
 
-public sealed class InitCommand : Command<InitSettings>
-{
-    public override int Execute(CommandContext context, InitSettings settings, CancellationToken cancellation)
+    internal static int Execute(string? projectName, bool yes)
     {
         try
         {
-            var projectName = settings.ProjectName;
-
             // Handle explicit current directory
             if (projectName == ".")
                 projectName = null;
@@ -52,7 +59,7 @@ public sealed class InitCommand : Command<InitSettings>
             {
                 ConsoleHelpers.Warning("apm.yml already exists");
 
-                if (!settings.Yes)
+                if (!yes)
                 {
                     if (!AnsiConsole.Confirm("Continue and overwrite?", defaultValue: false))
                     {
@@ -68,7 +75,7 @@ public sealed class InitCommand : Command<InitSettings>
 
             // Get project configuration
             Dictionary<string, string> config;
-            if (!settings.Yes)
+            if (!yes)
                 config = InteractiveProjectSetup(finalProjectName);
             else
                 config = GetDefaultConfig(finalProjectName);

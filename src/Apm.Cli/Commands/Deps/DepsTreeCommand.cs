@@ -1,17 +1,24 @@
+using System.CommandLine;
+using System.CommandLine.Invocation;
 using Spectre.Console;
-using Spectre.Console.Cli;
 using Apm.Cli.Models;
 using Apm.Cli.Utils;
 
 namespace Apm.Cli.Commands.Deps;
 
-public sealed class DepsTreeSettings : CommandSettings
+public static class DepsTreeCommand
 {
-}
+    public static Command Create()
+    {
+        var command = new Command("tree", "🌳 Show dependency tree");
+        command.SetHandler(ctx =>
+        {
+            ctx.ExitCode = Execute();
+        });
+        return command;
+    }
 
-public sealed class DepsTreeCommand : Command<DepsTreeSettings>
-{
-    public override int Execute(CommandContext context, DepsTreeSettings settings, CancellationToken cancellation)
+    internal static int Execute()
     {
         try
         {

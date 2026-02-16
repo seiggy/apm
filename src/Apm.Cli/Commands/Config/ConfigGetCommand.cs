@@ -1,28 +1,38 @@
-using System.ComponentModel;
+using System.CommandLine;
+using System.CommandLine.Invocation;
 using System.Text.Json.Nodes;
 using Spectre.Console;
-using Spectre.Console.Cli;
 using Apm.Cli.Core;
 using Apm.Cli.Utils;
 
 namespace Apm.Cli.Commands.Config;
 
-public sealed class ConfigGetSettings : CommandSettings
+public static class ConfigGetCommand
 {
-    [CommandArgument(0, "[key]")]
-    [Description("Configuration key to retrieve")]
-    public string? Key { get; set; }
-}
+    public static Command Create()
+    {
+        var keyArg = new Argument<string?>("key", "Configuration key to retrieve")
+        {
+            Arity = ArgumentArity.ZeroOrOne,
+        };
 
-public sealed class ConfigGetCommand : Command<ConfigGetSettings>
-{
+        var command = new Command("get", "📖 Get configuration value");
+        command.AddArgument(keyArg);
+        command.SetHandler(ctx =>
+        {
+            var key = ctx.ParseResult.GetValueForArgument(keyArg);
+            ctx.ExitCode = Execute(key);
+        });
+        return command;
+    }
+
     private static readonly HashSet<string> ValidKeys = ["auto-integrate"];
 
-    public override int Execute(CommandContext context, ConfigGetSettings settings, CancellationToken cancellation)
+    internal static int Execute(string? key)
     {
-        if (!string.IsNullOrEmpty(settings.Key))
+        if (!string.IsNullOrEmpty(key))
         {
-            if (settings.Key == "auto-integrate")
+            if (key == "auto-integrate")
             {
                 var config = Configuration.GetConfig();
                 var value = config.TryGetValue("auto_integrate", out var node) && node is not null
@@ -32,7 +42,7 @@ public sealed class ConfigGetCommand : Command<ConfigGetSettings>
             }
             else
             {
-                ConsoleHelpers.Error($"Unknown configuration key: '{settings.Key}'");
+                ConsoleHelpers.Error($"Unknown configuration key: '{key}'");
                 ConsoleHelpers.Info($"Valid keys: {string.Join(", ", ValidKeys)}");
                 return 1;
             }
@@ -42,9 +52,9 @@ public sealed class ConfigGetCommand : Command<ConfigGetSettings>
             // Show all config
             var config = Configuration.GetConfig();
             ConsoleHelpers.Info("APM Configuration:");
-            foreach (var (key, value) in config)
+            foreach (var (k, value) in config)
             {
-                var displayKey = key == "auto_integrate" ? "auto-integrate" : key;
+                var displayKey = k == "auto_integrate" ? "auto-integrate" : k;
                 AnsiConsole.MarkupLine($"  {Markup.Escape(displayKey)}: {Markup.Escape(value?.ToString() ?? "")}");
             }
         }

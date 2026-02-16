@@ -1,18 +1,25 @@
+using System.CommandLine;
+using System.CommandLine.Invocation;
 using Spectre.Console;
-using Spectre.Console.Cli;
 using Apm.Cli.Core;
 using Apm.Cli.Models;
 using Apm.Cli.Utils;
 
 namespace Apm.Cli.Commands.Config;
 
-public sealed class ConfigShowSettings : CommandSettings
+public static class ConfigShowCommand
 {
-}
+    public static Command Create()
+    {
+        var command = new Command("show", "📋 Show current configuration");
+        command.SetHandler(ctx =>
+        {
+            ctx.ExitCode = Execute();
+        });
+        return command;
+    }
 
-public sealed class ConfigShowCommand : Command<ConfigShowSettings>
-{
-    public override int Execute(CommandContext context, ConfigShowSettings settings, CancellationToken cancellation)
+    internal static int Execute()
     {
         var table = new Table()
         {

@@ -1,17 +1,24 @@
+using System.CommandLine;
+using System.CommandLine.Invocation;
 using Spectre.Console;
-using Spectre.Console.Cli;
 using Apm.Cli.Models;
 using Apm.Cli.Utils;
 
 namespace Apm.Cli.Commands.Deps;
 
-public sealed class DepsListSettings : CommandSettings
+public static class DepsListCommand
 {
-}
+    public static Command Create()
+    {
+        var command = new Command("list", "📋 List installed APM dependencies");
+        command.SetHandler(ctx =>
+        {
+            ctx.ExitCode = Execute();
+        });
+        return command;
+    }
 
-public sealed class DepsListCommand : Command<DepsListSettings>
-{
-    public override int Execute(CommandContext context, DepsListSettings settings, CancellationToken cancellation)
+    internal static int Execute()
     {
         try
         {

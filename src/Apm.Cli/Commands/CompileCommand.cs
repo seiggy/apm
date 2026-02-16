@@ -1,8 +1,8 @@
-using System.ComponentModel;
+using System.CommandLine;
+using System.CommandLine.Invocation;
 using System.Security.Cryptography;
 using System.Text;
 using Spectre.Console;
-using Spectre.Console.Cli;
 using Apm.Cli.Compilation;
 using Apm.Cli.Core;
 using Apm.Cli.Models;
@@ -11,72 +11,87 @@ using Apm.Cli.Utils;
 
 namespace Apm.Cli.Commands;
 
-public sealed class CompileSettings : CommandSettings
+public static class CompileCommand
 {
-    [CommandOption("-t|--target")]
-    [Description("🎯 Target platform: vscode, agents, claude, or all (auto-detects if omitted)")]
-    public string? Target { get; set; }
+    public static Command Create()
+    {
+        var targetOpt = new Option<string?>(["--target", "-t"], "🎯 Target platform: vscode, agents, claude, or all (auto-detects if omitted)");
+        var strategyOpt = new Option<string?>("--strategy", "Compilation strategy: distributed or single-file");
+        var singleAgentsOpt = new Option<bool>("--single-agents", "📄 Force single-file compilation (legacy mode)");
+        var dryRunOpt = new Option<bool>("--dry-run", "🔍 Preview compilation without writing files");
+        var verboseOpt = new Option<bool>(["--verbose", "-v"], "🔍 Show detailed source attribution and optimizer analysis");
+        var traceOpt = new Option<bool>("--trace", "Show source attribution");
+        var localOnlyOpt = new Option<bool>("--local-only", "🏠 Ignore dependencies, compile only local primitives");
+        var debugOpt = new Option<bool>("--debug", "Show optimizer metrics");
+        var noConstitutionOpt = new Option<bool>("--no-constitution", "Skip constitution block");
+        var chatmodeOpt = new Option<string?>("--chatmode", "Target specific chatmode");
+        var cleanOpt = new Option<bool>("--clean", "🧹 Remove orphaned AGENTS.md files that are no longer generated");
+        var excludeOpt = new Option<string[]>("--exclude", "Glob patterns to exclude from compilation") { AllowMultipleArgumentsPerToken = true };
+        var watchOpt = new Option<bool>("--watch", "Watch for changes and recompile");
+        var noLinksOpt = new Option<bool>("--no-links", "Skip markdown link resolution");
+        var validateOpt = new Option<bool>("--validate", "Validate primitives without compiling");
 
-    [CommandOption("--strategy")]
-    [Description("Compilation strategy: distributed or single-file")]
-    public string? Strategy { get; set; }
+        var command = new Command("compile", "🚀 Compile APM context into distributed AGENTS.md files");
+        command.AddOption(targetOpt);
+        command.AddOption(strategyOpt);
+        command.AddOption(singleAgentsOpt);
+        command.AddOption(dryRunOpt);
+        command.AddOption(verboseOpt);
+        command.AddOption(traceOpt);
+        command.AddOption(localOnlyOpt);
+        command.AddOption(debugOpt);
+        command.AddOption(noConstitutionOpt);
+        command.AddOption(chatmodeOpt);
+        command.AddOption(cleanOpt);
+        command.AddOption(excludeOpt);
+        command.AddOption(watchOpt);
+        command.AddOption(noLinksOpt);
+        command.AddOption(validateOpt);
+        command.SetHandler(ctx =>
+        {
+            var settings = new CompileOptions
+            {
+                Target = ctx.ParseResult.GetValueForOption(targetOpt),
+                Strategy = ctx.ParseResult.GetValueForOption(strategyOpt),
+                SingleAgents = ctx.ParseResult.GetValueForOption(singleAgentsOpt),
+                DryRun = ctx.ParseResult.GetValueForOption(dryRunOpt),
+                Verbose = ctx.ParseResult.GetValueForOption(verboseOpt),
+                Trace = ctx.ParseResult.GetValueForOption(traceOpt),
+                LocalOnly = ctx.ParseResult.GetValueForOption(localOnlyOpt),
+                Debug = ctx.ParseResult.GetValueForOption(debugOpt),
+                NoConstitution = ctx.ParseResult.GetValueForOption(noConstitutionOpt),
+                Chatmode = ctx.ParseResult.GetValueForOption(chatmodeOpt),
+                Clean = ctx.ParseResult.GetValueForOption(cleanOpt),
+                Exclude = ctx.ParseResult.GetValueForOption(excludeOpt),
+                Watch = ctx.ParseResult.GetValueForOption(watchOpt),
+                NoLinks = ctx.ParseResult.GetValueForOption(noLinksOpt),
+                ValidateOnly = ctx.ParseResult.GetValueForOption(validateOpt),
+            };
+            ctx.ExitCode = Execute(settings, ctx.GetCancellationToken());
+        });
+        return command;
+    }
 
-    [CommandOption("--single-agents")]
-    [Description("📄 Force single-file compilation (legacy mode)")]
-    public bool SingleAgents { get; set; }
+    internal sealed class CompileOptions
+    {
+        public string? Target { get; set; }
+        public string? Strategy { get; set; }
+        public bool SingleAgents { get; set; }
+        public bool DryRun { get; set; }
+        public bool Verbose { get; set; }
+        public bool Trace { get; set; }
+        public bool LocalOnly { get; set; }
+        public bool Debug { get; set; }
+        public bool NoConstitution { get; set; }
+        public string? Chatmode { get; set; }
+        public bool Clean { get; set; }
+        public string[]? Exclude { get; set; }
+        public bool Watch { get; set; }
+        public bool NoLinks { get; set; }
+        public bool ValidateOnly { get; set; }
+    }
 
-    [CommandOption("--dry-run")]
-    [Description("🔍 Preview compilation without writing files")]
-    public bool DryRun { get; set; }
-
-    [CommandOption("-v|--verbose")]
-    [Description("🔍 Show detailed source attribution and optimizer analysis")]
-    public bool Verbose { get; set; }
-
-    [CommandOption("--trace")]
-    [Description("Show source attribution")]
-    public bool Trace { get; set; }
-
-    [CommandOption("--local-only")]
-    [Description("🏠 Ignore dependencies, compile only local primitives")]
-    public bool LocalOnly { get; set; }
-
-    [CommandOption("--debug")]
-    [Description("Show optimizer metrics")]
-    public bool Debug { get; set; }
-
-    [CommandOption("--no-constitution")]
-    [Description("Skip constitution block")]
-    public bool NoConstitution { get; set; }
-
-    [CommandOption("--chatmode")]
-    [Description("Target specific chatmode")]
-    public string? Chatmode { get; set; }
-
-    [CommandOption("--clean")]
-    [Description("🧹 Remove orphaned AGENTS.md files that are no longer generated")]
-    public bool Clean { get; set; }
-
-    [CommandOption("--exclude")]
-    [Description("Glob patterns to exclude from compilation")]
-    public string[]? Exclude { get; set; }
-
-    [CommandOption("--watch")]
-    [Description("Watch for changes and recompile")]
-    public bool Watch { get; set; }
-
-    [CommandOption("--no-links")]
-    [Description("Skip markdown link resolution")]
-    public bool NoLinks { get; set; }
-
-    [CommandOption("--validate")]
-    [Description("Validate primitives without compiling")]
-    public bool ValidateOnly { get; set; }
-}
-
-public sealed class CompileCommand : Command<CompileSettings>
-{
-    public override int Execute(CommandContext context, CompileSettings settings, CancellationToken cancellation)
+    internal static int Execute(CompileOptions settings, CancellationToken cancellation)
     {
         try
         {
@@ -276,7 +291,7 @@ public sealed class CompileCommand : Command<CompileSettings>
         AgentsCompiler compiler,
         CompilationConfig config,
         CompilationResult result,
-        CompileSettings settings)
+        CompileOptions settings)
     {
         // Perform intermediate compilation for constitution injection
         var intermediateConfig = new CompilationConfig
@@ -376,7 +391,7 @@ public sealed class CompileCommand : Command<CompileSettings>
         }
     }
 
-    private static int RunWatchMode(CompileSettings settings, CancellationToken cancellation)
+    private static int RunWatchMode(CompileOptions settings, CancellationToken cancellation)
     {
         ConsoleHelpers.Info("Watch mode: monitoring for changes...", symbol: "preview");
 

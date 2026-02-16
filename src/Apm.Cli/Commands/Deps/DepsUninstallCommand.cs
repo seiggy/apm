@@ -1,25 +1,34 @@
-using System.ComponentModel;
+using System.CommandLine;
+using System.CommandLine.Invocation;
 using Spectre.Console;
-using Spectre.Console.Cli;
 using Apm.Cli.Models;
 using Apm.Cli.Utils;
 
 namespace Apm.Cli.Commands.Deps;
 
-public sealed class DepsUninstallSettings : CommandSettings
+public static class DepsUninstallCommand
 {
-    [CommandArgument(0, "<packages>")]
-    [Description("Packages to uninstall")]
-    public required string[] Packages { get; set; }
+    public static Command Create()
+    {
+        var packagesArg = new Argument<string[]>("packages", "Packages to uninstall")
+        {
+            Arity = ArgumentArity.OneOrMore,
+        };
+        var dryRunOpt = new Option<bool>("--dry-run", "Show what would be removed without removing");
 
-    [CommandOption("--dry-run")]
-    [Description("Show what would be removed without removing")]
-    public bool DryRun { get; set; }
-}
+        var command = new Command("uninstall", "🗑️  Uninstall APM packages");
+        command.AddArgument(packagesArg);
+        command.AddOption(dryRunOpt);
+        command.SetHandler(ctx =>
+        {
+            var packages = ctx.ParseResult.GetValueForArgument(packagesArg);
+            var dryRun = ctx.ParseResult.GetValueForOption(dryRunOpt);
+            ctx.ExitCode = Execute(packages, dryRun);
+        });
+        return command;
+    }
 
-public sealed class DepsUninstallCommand : Command<DepsUninstallSettings>
-{
-    public override int Execute(CommandContext context, DepsUninstallSettings settings, CancellationToken cancellation)
+    internal static int Execute(string[] packages, bool dryRun)
     {
         try
         {
@@ -30,13 +39,13 @@ public sealed class DepsUninstallCommand : Command<DepsUninstallSettings>
                 return 1;
             }
 
-            if (settings.Packages.Length == 0)
+            if (packages.Length == 0)
             {
                 ConsoleHelpers.Error("No packages specified. Specify packages to uninstall.");
                 return 1;
             }
 
-            ConsoleHelpers.Info($"Uninstalling {settings.Packages.Length} package(s)...", symbol: "bulb");
+            ConsoleHelpers.Info($"Uninstalling {packages.Length} package(s)...", symbol: "bulb");
 
             // Read current apm.yml
             ApmManifest manifest;
@@ -60,7 +69,7 @@ public sealed class DepsUninstallCommand : Command<DepsUninstallSettings>
             var packagesToRemove = new List<string>();
             var packagesNotFound = new List<string>();
 
-            foreach (var package in settings.Packages)
+            foreach (var package in packages)
             {
                 if (!package.Contains('/'))
                 {
@@ -86,7 +95,7 @@ public sealed class DepsUninstallCommand : Command<DepsUninstallSettings>
                 return 0;
             }
 
-            if (settings.DryRun)
+            if (dryRun)
             {
                 ConsoleHelpers.Info($"Dry run: Would remove {packagesToRemove.Count} package(s):");
                 foreach (var pkg in packagesToRemove)

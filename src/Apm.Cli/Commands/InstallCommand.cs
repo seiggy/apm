@@ -1,6 +1,6 @@
-using System.ComponentModel;
+using System.CommandLine;
+using System.CommandLine.Invocation;
 using Spectre.Console;
-using Spectre.Console.Cli;
 using Apm.Cli.Core;
 using Apm.Cli.Dependencies;
 using Apm.Cli.Integration;
@@ -9,40 +9,58 @@ using Apm.Cli.Utils;
 
 namespace Apm.Cli.Commands;
 
-public sealed class InstallSettings : CommandSettings
+public static class InstallCommand
 {
-    [CommandArgument(0, "[packages]")]
-    [Description("Packages to install")]
-    public string[]? Packages { get; set; }
+    public static Command Create()
+    {
+        var packagesArg = new Argument<string[]>("packages", "Packages to install")
+        {
+            Arity = ArgumentArity.ZeroOrMore,
+        };
+        var runtimeOpt = new Option<string?>("--runtime", "Target specific runtime only (copilot, codex, vscode)");
+        var excludeOpt = new Option<string?>("--exclude", "Exclude specific runtime from installation");
+        var onlyOpt = new Option<string?>("--only", "Install only specific dependency types");
+        var updateOpt = new Option<bool>(["--update", "-u"], "Update existing packages");
+        var dryRunOpt = new Option<bool>("--dry-run", "Show what would be installed without installing");
+        var verboseOpt = new Option<bool>("--verbose", "Show detailed installation information");
 
-    [CommandOption("--runtime")]
-    [Description("Target specific runtime only (copilot, codex, vscode)")]
-    public string? Runtime { get; set; }
+        var command = new Command("install", "📦 Install APM packages");
+        command.AddArgument(packagesArg);
+        command.AddOption(runtimeOpt);
+        command.AddOption(excludeOpt);
+        command.AddOption(onlyOpt);
+        command.AddOption(updateOpt);
+        command.AddOption(dryRunOpt);
+        command.AddOption(verboseOpt);
+        command.SetHandler(ctx =>
+        {
+            var settings = new InstallOptions
+            {
+                Packages = ctx.ParseResult.GetValueForArgument(packagesArg),
+                Runtime = ctx.ParseResult.GetValueForOption(runtimeOpt),
+                Exclude = ctx.ParseResult.GetValueForOption(excludeOpt),
+                Only = ctx.ParseResult.GetValueForOption(onlyOpt),
+                Update = ctx.ParseResult.GetValueForOption(updateOpt),
+                DryRun = ctx.ParseResult.GetValueForOption(dryRunOpt),
+                Verbose = ctx.ParseResult.GetValueForOption(verboseOpt),
+            };
+            ctx.ExitCode = Execute(settings);
+        });
+        return command;
+    }
 
-    [CommandOption("--exclude")]
-    [Description("Exclude specific runtime from installation")]
-    public string? Exclude { get; set; }
+    internal sealed class InstallOptions
+    {
+        public string[]? Packages { get; set; }
+        public string? Runtime { get; set; }
+        public string? Exclude { get; set; }
+        public string? Only { get; set; }
+        public bool Update { get; set; }
+        public bool DryRun { get; set; }
+        public bool Verbose { get; set; }
+    }
 
-    [CommandOption("--only")]
-    [Description("Install only specific dependency types")]
-    public string? Only { get; set; }
-
-    [CommandOption("-u|--update")]
-    [Description("Update existing packages")]
-    public bool Update { get; set; }
-
-    [CommandOption("--dry-run")]
-    [Description("Show what would be installed without installing")]
-    public bool DryRun { get; set; }
-
-    [CommandOption("--verbose")]
-    [Description("Show detailed installation information")]
-    public bool Verbose { get; set; }
-}
-
-public sealed class InstallCommand : Command<InstallSettings>
-{
-    public override int Execute(CommandContext context, InstallSettings settings, CancellationToken cancellation)
+    internal static int Execute(InstallOptions settings)
     {
         try
         {

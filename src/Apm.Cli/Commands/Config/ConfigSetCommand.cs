@@ -1,32 +1,38 @@
-using System.ComponentModel;
+using System.CommandLine;
+using System.CommandLine.Invocation;
 using System.Text.Json.Nodes;
-using Spectre.Console.Cli;
 using Apm.Cli.Core;
 using Apm.Cli.Utils;
 
 namespace Apm.Cli.Commands.Config;
 
-public sealed class ConfigSetSettings : CommandSettings
+public static class ConfigSetCommand
 {
-    [CommandArgument(0, "<key>")]
-    [Description("Configuration key to set")]
-    public required string Key { get; set; }
+    public static Command Create()
+    {
+        var keyArg = new Argument<string>("key", "Configuration key to set");
+        var valueArg = new Argument<string>("value", "Value to set");
 
-    [CommandArgument(1, "<value>")]
-    [Description("Value to set")]
-    public required string Value { get; set; }
-}
+        var command = new Command("set", "✏️  Set configuration value");
+        command.AddArgument(keyArg);
+        command.AddArgument(valueArg);
+        command.SetHandler(ctx =>
+        {
+            var key = ctx.ParseResult.GetValueForArgument(keyArg);
+            var value = ctx.ParseResult.GetValueForArgument(valueArg);
+            ctx.ExitCode = Execute(key, value);
+        });
+        return command;
+    }
 
-public sealed class ConfigSetCommand : Command<ConfigSetSettings>
-{
     private static readonly string[] TrueValues = ["true", "1", "yes"];
     private static readonly string[] FalseValues = ["false", "0", "no"];
 
-    public override int Execute(CommandContext context, ConfigSetSettings settings, CancellationToken cancellation)
+    internal static int Execute(string key, string value)
     {
-        if (settings.Key == "auto-integrate")
+        if (key == "auto-integrate")
         {
-            if (TrueValues.Contains(settings.Value, StringComparer.OrdinalIgnoreCase))
+            if (TrueValues.Contains(value, StringComparer.OrdinalIgnoreCase))
             {
                 Configuration.UpdateConfig(new Dictionary<string, JsonNode?>
                 {
@@ -34,7 +40,7 @@ public sealed class ConfigSetCommand : Command<ConfigSetSettings>
                 });
                 ConsoleHelpers.Success("Auto-integration enabled");
             }
-            else if (FalseValues.Contains(settings.Value, StringComparer.OrdinalIgnoreCase))
+            else if (FalseValues.Contains(value, StringComparer.OrdinalIgnoreCase))
             {
                 Configuration.UpdateConfig(new Dictionary<string, JsonNode?>
                 {
@@ -44,13 +50,13 @@ public sealed class ConfigSetCommand : Command<ConfigSetSettings>
             }
             else
             {
-                ConsoleHelpers.Error($"Invalid value '{settings.Value}'. Use 'true' or 'false'.");
+                ConsoleHelpers.Error($"Invalid value '{value}'. Use 'true' or 'false'.");
                 return 1;
             }
         }
         else
         {
-            ConsoleHelpers.Error($"Unknown configuration key: '{settings.Key}'");
+            ConsoleHelpers.Error($"Unknown configuration key: '{key}'");
             ConsoleHelpers.Info("Valid keys: auto-integrate");
             return 1;
         }

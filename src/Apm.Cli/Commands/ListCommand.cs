@@ -1,17 +1,24 @@
+using System.CommandLine;
+using System.CommandLine.Invocation;
 using Spectre.Console;
-using Spectre.Console.Cli;
 using Apm.Cli.Core;
 using Apm.Cli.Utils;
 
 namespace Apm.Cli.Commands;
 
-public sealed class ListSettings : CommandSettings
+public static class ListCommand
 {
-}
+    public static Command Create()
+    {
+        var command = new Command("list", "📋 List available scripts in the current project");
+        command.SetHandler(ctx =>
+        {
+            ctx.ExitCode = Execute();
+        });
+        return command;
+    }
 
-public sealed class ListCommand : Command<ListSettings>
-{
-    public override int Execute(CommandContext context, ListSettings settings, CancellationToken cancellation)
+    internal static int Execute()
     {
         try
         {

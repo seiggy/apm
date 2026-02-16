@@ -1,8 +1,8 @@
+using System.CommandLine;
 using Apm.Cli.Commands;
 using Apm.Cli.Commands.Config;
 using Apm.Cli.Commands.Deps;
 using AwesomeAssertions;
-using Spectre.Console.Cli;
 
 namespace Apm.Cli.Tests.Commands;
 
@@ -34,16 +34,10 @@ public class InitCommandTests : IDisposable
     [Fact]
     public void Init_CreatesApmYml()
     {
-        var app = new CommandApp();
-        app.Configure(config =>
-        {
-            config.AddCommand<InitCommand>("init");
-            config.PropagateExceptions();
-        });
+        var root = new RootCommand();
+        root.AddCommand(InitCommand.Create());
+        root.Invoke(["init", "-y"]);
 
-        app.Run(["init", "-y"]);
-
-        // InitCommand writes apm.yml in cwd
         var cwd = Directory.GetCurrentDirectory();
         File.Exists(Path.Combine(cwd, "apm.yml")).Should().BeTrue();
     }
@@ -51,14 +45,9 @@ public class InitCommandTests : IDisposable
     [Fact]
     public void Init_ApmYmlContainsProjectName()
     {
-        var app = new CommandApp();
-        app.Configure(config =>
-        {
-            config.AddCommand<InitCommand>("init");
-            config.PropagateExceptions();
-        });
-
-        app.Run(["init", "-y"]);
+        var root = new RootCommand();
+        root.AddCommand(InitCommand.Create());
+        root.Invoke(["init", "-y"]);
 
         var cwd = Directory.GetCurrentDirectory();
         var content = File.ReadAllText(Path.Combine(cwd, "apm.yml"));
@@ -69,14 +58,9 @@ public class InitCommandTests : IDisposable
     [Fact]
     public void Init_WithProjectName_CreatesSubdirectory()
     {
-        var app = new CommandApp();
-        app.Configure(config =>
-        {
-            config.AddCommand<InitCommand>("init");
-            config.PropagateExceptions();
-        });
-
-        app.Run(["init", "my-project", "-y"]);
+        var root = new RootCommand();
+        root.AddCommand(InitCommand.Create());
+        root.Invoke(["init", "my-project", "-y"]);
 
         var projectDir = Path.Combine(_tempDir, "my-project");
         Directory.Exists(projectDir).Should().BeTrue();
@@ -86,14 +70,9 @@ public class InitCommandTests : IDisposable
     [Fact]
     public void Init_ExplicitDot_SameAsCurrentDirectory()
     {
-        var app = new CommandApp();
-        app.Configure(config =>
-        {
-            config.AddCommand<InitCommand>("init");
-            config.PropagateExceptions();
-        });
-
-        app.Run(["init", ".", "-y"]);
+        var root = new RootCommand();
+        root.AddCommand(InitCommand.Create());
+        root.Invoke(["init", ".", "-y"]);
 
         var cwd = Directory.GetCurrentDirectory();
         File.Exists(Path.Combine(cwd, "apm.yml")).Should().BeTrue();
@@ -104,14 +83,9 @@ public class InitCommandTests : IDisposable
     {
         File.WriteAllText(Path.Combine(_tempDir, "apm.yml"), "name: existing-project\nversion: 0.1.0\n");
 
-        var app = new CommandApp();
-        app.Configure(config =>
-        {
-            config.AddCommand<InitCommand>("init");
-            config.PropagateExceptions();
-        });
-
-        var exitCode = app.Run(["init", "-y"]);
+        var root = new RootCommand();
+        root.AddCommand(InitCommand.Create());
+        var exitCode = root.Invoke(["init", "-y"]);
 
         exitCode.Should().Be(0);
         var content = File.ReadAllText(Path.Combine(_tempDir, "apm.yml"));
@@ -121,14 +95,9 @@ public class InitCommandTests : IDisposable
     [Fact]
     public void Init_ApmYmlHasDependenciesAndScripts()
     {
-        var app = new CommandApp();
-        app.Configure(config =>
-        {
-            config.AddCommand<InitCommand>("init");
-            config.PropagateExceptions();
-        });
-
-        app.Run(["init", "test-project", "-y"]);
+        var root = new RootCommand();
+        root.AddCommand(InitCommand.Create());
+        root.Invoke(["init", "test-project", "-y"]);
 
         var projectDir = Path.Combine(_tempDir, "test-project");
         var content = File.ReadAllText(Path.Combine(projectDir, "apm.yml"));
@@ -141,14 +110,9 @@ public class InitCommandTests : IDisposable
     [Fact]
     public void Init_DoesNotCreateSkillMd()
     {
-        var app = new CommandApp();
-        app.Configure(config =>
-        {
-            config.AddCommand<InitCommand>("init");
-            config.PropagateExceptions();
-        });
-
-        app.Run(["init", "-y"]);
+        var root = new RootCommand();
+        root.AddCommand(InitCommand.Create());
+        root.Invoke(["init", "-y"]);
 
         var cwd = Directory.GetCurrentDirectory();
         File.Exists(Path.Combine(cwd, "SKILL.md")).Should().BeFalse();
@@ -180,14 +144,9 @@ public class InstallCommandTests : IDisposable
     [Fact]
     public void Install_NoApmYml_NoPackages_ReturnsError()
     {
-        var app = new CommandApp();
-        app.Configure(config =>
-        {
-            config.AddCommand<InstallCommand>("install");
-            config.PropagateExceptions();
-        });
-
-        var exitCode = app.Run(["install"]);
+        var root = new RootCommand();
+        root.AddCommand(InstallCommand.Create());
+        var exitCode = root.Invoke(["install"]);
 
         exitCode.Should().Be(1);
     }
@@ -195,14 +154,9 @@ public class InstallCommandTests : IDisposable
     [Fact]
     public void Install_NoApmYml_WithPackage_CreatesApmYml()
     {
-        var app = new CommandApp();
-        app.Configure(config =>
-        {
-            config.AddCommand<InstallCommand>("install");
-            // Don't propagate exceptions - install will fail on download but apm.yml should be created
-        });
-
-        app.Run(["install", "test/package"]);
+        var root = new RootCommand();
+        root.AddCommand(InstallCommand.Create());
+        root.Invoke(["install", "test/package"]);
 
         // Auto-bootstrap should create apm.yml even if download fails
         File.Exists(Path.Combine(_tempDir, "apm.yml")).Should().BeTrue();
@@ -213,14 +167,9 @@ public class InstallCommandTests : IDisposable
     [Fact]
     public void Install_InvalidPackageFormat_ShowsError()
     {
-        var app = new CommandApp();
-        app.Configure(config =>
-        {
-            config.AddCommand<InstallCommand>("install");
-        });
-
-        // invalid-package has no slash, so it should fail validation
-        app.Run(["install", "invalid-package"]);
+        var root = new RootCommand();
+        root.AddCommand(InstallCommand.Create());
+        root.Invoke(["install", "invalid-package"]);
 
         // apm.yml still created by auto-bootstrap, but invalid pkg not added
         File.Exists(Path.Combine(_tempDir, "apm.yml")).Should().BeTrue();
@@ -254,14 +203,9 @@ public class CompileCommandTests : IDisposable
     [Fact]
     public void Compile_WithoutApmYml_ReturnsError()
     {
-        var app = new CommandApp();
-        app.Configure(config =>
-        {
-            config.AddCommand<CompileCommand>("compile");
-            config.PropagateExceptions();
-        });
-
-        var exitCode = app.Run(["compile"]);
+        var root = new RootCommand();
+        root.AddCommand(CompileCommand.Create());
+        var exitCode = root.Invoke(["compile"]);
 
         exitCode.Should().Be(1);
     }
@@ -271,14 +215,9 @@ public class CompileCommandTests : IDisposable
     {
         CreateMinimalApmYml();
 
-        var app = new CommandApp();
-        app.Configure(config =>
-        {
-            config.AddCommand<CompileCommand>("compile");
-            config.PropagateExceptions();
-        });
-
-        var exitCode = app.Run(["compile"]);
+        var root = new RootCommand();
+        root.AddCommand(CompileCommand.Create());
+        var exitCode = root.Invoke(["compile"]);
 
         exitCode.Should().Be(1);
     }
@@ -289,14 +228,9 @@ public class CompileCommandTests : IDisposable
         CreateMinimalApmYml();
         CreateSampleInstruction();
 
-        var app = new CommandApp();
-        app.Configure(config =>
-        {
-            config.AddCommand<CompileCommand>("compile");
-            config.PropagateExceptions();
-        });
-
-        var exitCode = app.Run(["compile", "--dry-run", "--single-agents", "--target", "vscode"]);
+        var root = new RootCommand();
+        root.AddCommand(CompileCommand.Create());
+        var exitCode = root.Invoke(["compile", "--dry-run", "--single-agents", "--target", "vscode"]);
 
         exitCode.Should().Be(0);
     }
@@ -307,14 +241,9 @@ public class CompileCommandTests : IDisposable
         CreateMinimalApmYml();
         CreateSampleInstruction();
 
-        var app = new CommandApp();
-        app.Configure(config =>
-        {
-            config.AddCommand<CompileCommand>("compile");
-            config.PropagateExceptions();
-        });
-
-        app.Run(["compile", "--single-agents", "--target", "vscode"]);
+        var root = new RootCommand();
+        root.AddCommand(CompileCommand.Create());
+        root.Invoke(["compile", "--single-agents", "--target", "vscode"]);
 
         File.Exists(Path.Combine(_tempDir, "AGENTS.md")).Should().BeTrue();
     }
@@ -325,14 +254,9 @@ public class CompileCommandTests : IDisposable
         CreateMinimalApmYml();
         CreateSampleInstruction();
 
-        var app = new CommandApp();
-        app.Configure(config =>
-        {
-            config.AddCommand<CompileCommand>("compile");
-            config.PropagateExceptions();
-        });
-
-        var exitCode = app.Run(["compile", "--single-agents", "--target", "vscode", "--no-constitution"]);
+        var root = new RootCommand();
+        root.AddCommand(CompileCommand.Create());
+        var exitCode = root.Invoke(["compile", "--single-agents", "--target", "vscode", "--no-constitution"]);
 
         exitCode.Should().Be(0);
     }
@@ -343,14 +267,9 @@ public class CompileCommandTests : IDisposable
         CreateMinimalApmYml();
         CreateSampleInstruction();
 
-        var app = new CommandApp();
-        app.Configure(config =>
-        {
-            config.AddCommand<CompileCommand>("compile");
-            config.PropagateExceptions();
-        });
-
-        var exitCode = app.Run(["compile", "--verbose", "--single-agents", "--target", "vscode"]);
+        var root = new RootCommand();
+        root.AddCommand(CompileCommand.Create());
+        var exitCode = root.Invoke(["compile", "--verbose", "--single-agents", "--target", "vscode"]);
 
         exitCode.Should().Be(0);
     }
@@ -410,17 +329,11 @@ public class ConfigCommandTests : IDisposable
     [Fact]
     public void ConfigGet_WithValidKey_ReturnsZero()
     {
-        var app = new CommandApp();
-        app.Configure(config =>
-        {
-            config.AddBranch("config", cfg =>
-            {
-                cfg.AddCommand<ConfigGetCommand>("get");
-            });
-            config.PropagateExceptions();
-        });
-
-        var exitCode = app.Run(["config", "get", "auto-integrate"]);
+        var configCmd = new Command("config");
+        configCmd.AddCommand(ConfigGetCommand.Create());
+        var root = new RootCommand();
+        root.AddCommand(configCmd);
+        var exitCode = root.Invoke(["config", "get", "auto-integrate"]);
 
         exitCode.Should().Be(0);
     }
@@ -428,17 +341,11 @@ public class ConfigCommandTests : IDisposable
     [Fact]
     public void ConfigGet_WithInvalidKey_ReturnsError()
     {
-        var app = new CommandApp();
-        app.Configure(config =>
-        {
-            config.AddBranch("config", cfg =>
-            {
-                cfg.AddCommand<ConfigGetCommand>("get");
-            });
-            config.PropagateExceptions();
-        });
-
-        var exitCode = app.Run(["config", "get", "nonexistent-key"]);
+        var configCmd = new Command("config");
+        configCmd.AddCommand(ConfigGetCommand.Create());
+        var root = new RootCommand();
+        root.AddCommand(configCmd);
+        var exitCode = root.Invoke(["config", "get", "nonexistent-key"]);
 
         exitCode.Should().Be(1);
     }
@@ -446,17 +353,11 @@ public class ConfigCommandTests : IDisposable
     [Fact]
     public void ConfigSet_AutoIntegrate_Succeeds()
     {
-        var app = new CommandApp();
-        app.Configure(config =>
-        {
-            config.AddBranch("config", cfg =>
-            {
-                cfg.AddCommand<ConfigSetCommand>("set");
-            });
-            config.PropagateExceptions();
-        });
-
-        var exitCode = app.Run(["config", "set", "auto-integrate", "true"]);
+        var configCmd = new Command("config");
+        configCmd.AddCommand(ConfigSetCommand.Create());
+        var root = new RootCommand();
+        root.AddCommand(configCmd);
+        var exitCode = root.Invoke(["config", "set", "auto-integrate", "true"]);
 
         exitCode.Should().Be(0);
     }
@@ -464,17 +365,11 @@ public class ConfigCommandTests : IDisposable
     [Fact]
     public void ConfigSet_InvalidKey_ReturnsError()
     {
-        var app = new CommandApp();
-        app.Configure(config =>
-        {
-            config.AddBranch("config", cfg =>
-            {
-                cfg.AddCommand<ConfigSetCommand>("set");
-            });
-            config.PropagateExceptions();
-        });
-
-        var exitCode = app.Run(["config", "set", "bad-key", "value"]);
+        var configCmd = new Command("config");
+        configCmd.AddCommand(ConfigSetCommand.Create());
+        var root = new RootCommand();
+        root.AddCommand(configCmd);
+        var exitCode = root.Invoke(["config", "set", "bad-key", "value"]);
 
         exitCode.Should().Be(1);
     }
@@ -482,17 +377,11 @@ public class ConfigCommandTests : IDisposable
     [Fact]
     public void ConfigShow_ReturnsZero()
     {
-        var app = new CommandApp();
-        app.Configure(config =>
-        {
-            config.AddBranch("config", cfg =>
-            {
-                cfg.AddCommand<ConfigShowCommand>("show");
-            });
-            config.PropagateExceptions();
-        });
-
-        var exitCode = app.Run(["config", "show"]);
+        var configCmd = new Command("config");
+        configCmd.AddCommand(ConfigShowCommand.Create());
+        var root = new RootCommand();
+        root.AddCommand(configCmd);
+        var exitCode = root.Invoke(["config", "show"]);
 
         exitCode.Should().Be(0);
     }
@@ -523,14 +412,9 @@ public class ListCommandTests : IDisposable
     [Fact]
     public void List_WithNoApmYml_ReturnsZero()
     {
-        var app = new CommandApp();
-        app.Configure(config =>
-        {
-            config.AddCommand<ListCommand>("list");
-            config.PropagateExceptions();
-        });
-
-        var exitCode = app.Run(["list"]);
+        var root = new RootCommand();
+        root.AddCommand(ListCommand.Create());
+        var exitCode = root.Invoke(["list"]);
 
         exitCode.Should().Be(0);
     }
@@ -549,14 +433,9 @@ public class ListCommandTests : IDisposable
             """;
         File.WriteAllText(Path.Combine(_tempDir, "apm.yml"), yaml);
 
-        var app = new CommandApp();
-        app.Configure(config =>
-        {
-            config.AddCommand<ListCommand>("list");
-            config.PropagateExceptions();
-        });
-
-        var exitCode = app.Run(["list"]);
+        var root = new RootCommand();
+        root.AddCommand(ListCommand.Create());
+        var exitCode = root.Invoke(["list"]);
 
         exitCode.Should().Be(0);
     }
@@ -573,14 +452,9 @@ public class ListCommandTests : IDisposable
             """;
         File.WriteAllText(Path.Combine(_tempDir, "apm.yml"), yaml);
 
-        var app = new CommandApp();
-        app.Configure(config =>
-        {
-            config.AddCommand<ListCommand>("list");
-            config.PropagateExceptions();
-        });
-
-        var exitCode = app.Run(["list"]);
+        var root = new RootCommand();
+        root.AddCommand(ListCommand.Create());
+        var exitCode = root.Invoke(["list"]);
 
         exitCode.Should().Be(0);
     }
@@ -611,17 +485,11 @@ public class DepsListCommandTests : IDisposable
     [Fact]
     public void DepsList_NoApmModules_ReturnsZero()
     {
-        var app = new CommandApp();
-        app.Configure(config =>
-        {
-            config.AddBranch("deps", deps =>
-            {
-                deps.AddCommand<DepsListCommand>("list");
-            });
-            config.PropagateExceptions();
-        });
-
-        var exitCode = app.Run(["deps", "list"]);
+        var depsCmd = new Command("deps");
+        depsCmd.AddCommand(DepsListCommand.Create());
+        var root = new RootCommand();
+        root.AddCommand(depsCmd);
+        var exitCode = root.Invoke(["deps", "list"]);
 
         exitCode.Should().Be(0);
     }
@@ -631,17 +499,11 @@ public class DepsListCommandTests : IDisposable
     {
         Directory.CreateDirectory(Path.Combine(_tempDir, "apm_modules"));
 
-        var app = new CommandApp();
-        app.Configure(config =>
-        {
-            config.AddBranch("deps", deps =>
-            {
-                deps.AddCommand<DepsListCommand>("list");
-            });
-            config.PropagateExceptions();
-        });
-
-        var exitCode = app.Run(["deps", "list"]);
+        var depsCmd = new Command("deps");
+        depsCmd.AddCommand(DepsListCommand.Create());
+        var root = new RootCommand();
+        root.AddCommand(depsCmd);
+        var exitCode = root.Invoke(["deps", "list"]);
 
         exitCode.Should().Be(0);
     }
@@ -670,17 +532,11 @@ public class DepsListCommandTests : IDisposable
             """;
         File.WriteAllText(Path.Combine(pkgDir, "apm.yml"), pkgYaml);
 
-        var app = new CommandApp();
-        app.Configure(config =>
-        {
-            config.AddBranch("deps", deps =>
-            {
-                deps.AddCommand<DepsListCommand>("list");
-            });
-            config.PropagateExceptions();
-        });
-
-        var exitCode = app.Run(["deps", "list"]);
+        var depsCmd = new Command("deps");
+        depsCmd.AddCommand(DepsListCommand.Create());
+        var root = new RootCommand();
+        root.AddCommand(depsCmd);
+        var exitCode = root.Invoke(["deps", "list"]);
 
         exitCode.Should().Be(0);
     }

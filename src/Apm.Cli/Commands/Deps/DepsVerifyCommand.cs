@@ -1,17 +1,24 @@
+using System.CommandLine;
+using System.CommandLine.Invocation;
 using Spectre.Console;
-using Spectre.Console.Cli;
 using Apm.Cli.Dependencies;
 using Apm.Cli.Utils;
 
 namespace Apm.Cli.Commands.Deps;
 
-public sealed class DepsVerifySettings : CommandSettings
+public static class DepsVerifyCommand
 {
-}
+    public static Command Create()
+    {
+        var command = new Command("verify", "✅ Verify installed dependencies");
+        command.SetHandler(ctx =>
+        {
+            ctx.ExitCode = Execute();
+        });
+        return command;
+    }
 
-public sealed class DepsVerifyCommand : Command<DepsVerifySettings>
-{
-    public override int Execute(CommandContext context, DepsVerifySettings settings, CancellationToken cancellation)
+    internal static int Execute()
     {
         try
         {
