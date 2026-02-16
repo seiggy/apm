@@ -1,101 +1,82 @@
 # Integration Testing
 
-This document describes APM's integration testing strategy to ensure runtime setup scripts work correctly and the golden scenario from the README functions as expected.
+This document describes APM's integration testing strategy for the .NET port to ensure runtime setup scripts work correctly and the golden scenario from the README functions as expected.
 
 ## Testing Strategy
 
 APM uses a tiered approach to integration testing:
 
-### 1. **Smoke Tests** (Every CI run)
-- **Location**: `tests/integration/test_runtime_smoke.py`
-- **Purpose**: Fast verification that runtime setup scripts work
-- **Scope**: 
-  - Runtime installation (codex, llm)
+### 1. **Unit Tests** (Every CI run)
+- **Location**: `tests/Apm.Cli.Tests/`
+- **Framework**: xUnit with FakeItEasy (mocking) and AwesomeAssertions (fluent assertions)
+- **Purpose**: Fast verification of individual components
+- **Duration**: ~1-2 minutes per platform
+- **Trigger**: Every push/PR
+
+### 2. **Integration Tests** (Every CI run)
+- **Location**: `tests/Apm.Cli.Tests/` (integration test classes)
+- **Purpose**: Verification that runtime setup, compilation, and install workflows function correctly
+- **Scope**:
   - Binary functionality (`--version`, `--help`)
   - APM runtime detection
   - Workflow compilation without execution
 - **Duration**: ~2-3 minutes per platform
 - **Trigger**: Every push/PR
 
-### 2. **End-to-End Golden Scenario Tests** (Releases only)
-- **Location**: `tests/integration/test_golden_scenario_e2e.py`
-- **Purpose**: Complete verification of the README golden scenario
+### 3. **NativeAOT Binary Validation** (Releases only)
+- **Purpose**: Complete verification using NativeAOT-compiled binaries
 - **Scope**:
-  - Full runtime setup and configuration
   - Project initialization (`apm init`)
-  - Dependency installation (`apm install`)
-  - Real API calls to GitHub Models
-  - Both Codex and LLM runtime execution
-- **Duration**: ~10-15 minutes per platform (with 20-minute timeout)  
+  - Compile dry-run (`apm compile --dry-run`)
+  - Binary isolation (no source checkout required)
+- **Duration**: ~5-10 minutes per platform
 - **Trigger**: Only on version tags (releases)
 
 ## Running Tests Locally
 
-### Smoke Tests
+### Unit & Integration Tests
 ```bash
-# Run all smoke tests
-pytest tests/integration/test_runtime_smoke.py -v
+# Run all tests
+dotnet test
 
-# Run specific test
-pytest tests/integration/test_runtime_smoke.py::TestRuntimeSmoke::test_codex_runtime_setup -v
+# Run with verbose output
+dotnet test --verbosity normal
+
+# Run specific test class
+dotnet test --filter "FullyQualifiedName~WorkflowTests"
+
+# Run with coverage
+dotnet test --collect:"XPlat Code Coverage"
 ```
 
-### E2E Tests
+### NativeAOT Binary Testing
 
-#### Option 1: Complete CI Process Simulation (Recommended)
 ```bash
-```bash
-export GITHUB_TOKEN=your_token_here
-./scripts/test-integration.sh
+# Build NativeAOT binary for your platform
+dotnet publish src/Apm.Cli -c Release -r win-x64 -p:NativeAot=true
+
+# Test the binary
+./publish/apm --version
+./publish/apm init test-project
+cd test-project
+../publish/apm compile --dry-run
 ```
-```
-
-This script (`scripts/test-integration.sh`) is a unified script that automatically adapts to your environment:
-
-**Local mode** (no existing binary):
-1. **Builds binary** with PyInstaller (like CI build job)
-2. **Sets up symlink and PATH** (like CI artifacts download)
-3. **Installs runtimes** (codex/llm setup)
-4. **Installs test dependencies** (like CI test setup)
-5. **Runs integration tests** with the built binary (like CI integration-tests job)
-
-**CI mode** (binary exists in `./dist/`):
-1. **Uses existing binary** from CI build artifacts
-2. **Sets up symlink and PATH** (standard CI process)
-3. **Installs runtimes** (codex/llm setup)
-4. **Installs test dependencies** (like CI test setup)  
-5. **Runs E2E tests** with pre-built binary
-
-#### Option 2: Direct pytest execution
-```bash
-# Set up environment
-export APM_E2E_TESTS=1
-export GITHUB_TOKEN=your_github_token_here
-export GITHUB_MODELS_KEY=your_github_token_here  # LLM runtime expects this specific env var
-
-# Run E2E tests
-pytest tests/integration/test_golden_scenario_e2e.py -v -s
-
-# Run specific E2E test
-pytest tests/integration/test_golden_scenario_e2e.py::TestGoldenScenarioE2E::test_complete_golden_scenario_codex -v -s
-```
-
-**Note**: Both `GITHUB_TOKEN` and `GITHUB_MODELS_KEY` should contain the same GitHub token value, but different runtimes expect different environment variable names.
 
 ## CI/CD Integration
 
 ### GitHub Actions Workflow
 
 **On every push/PR:**
-1. Unit tests + **Smoke tests** (runtime installation verification)
+1. Unit tests + Integration tests (cross-platform matrix)
 
 **On version tag releases:**
-1. Unit tests + Smoke tests
-2. Build binaries (cross-platform)
-3. **E2E golden scenario tests** (using built binaries)
-4. Create GitHub Release
-5. Publish to PyPI 
-6. Update Homebrew Formula
+1. Unit tests + Integration tests
+2. Build NativeAOT binaries (cross-platform: win-x64, linux-x64, linux-arm64, osx-x64, osx-arm64)
+3. Pack NuGet package
+4. Integration tests with built binaries
+5. Release validation (isolated binary testing)
+6. Create GitHub Release
+7. Push to NuGet.org
 
 **Manual workflow dispatch:**
 - Test builds (uploads as workflow artifacts)
@@ -104,116 +85,107 @@ pytest tests/integration/test_golden_scenario_e2e.py::TestGoldenScenarioE2E::tes
 
 ### GitHub Actions Authentication
 
-E2E tests require proper GitHub Models API access:
+Integration tests may require GitHub API access:
 
 **Required Permissions:**
 - `contents: read` - for repository access
-- `models: read` - **Required for GitHub Models API access**
 
 **Environment Variables:**
-- `GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}` - for Codex runtime
-- `GITHUB_MODELS_KEY: ${{ secrets.GITHUB_TOKEN }}` - for LLM runtime (expects different env var name)
-
-Both runtimes authenticate against GitHub Models but expect different environment variable names.
+- `GITHUB_TOKEN: ${{ secrets.GH_MODELS_PAT }}` - for runtime tests
+- `GITHUB_APM_PAT: ${{ secrets.GH_CLI_PAT }}` - for package installations
+- `ADO_APM_PAT: ${{ secrets.ADO_APM_PAT }}` - for Azure DevOps packages
 
 ### Release Pipeline Sequencing
 
 The workflow ensures quality gates at each step:
 
-1. **test** job - Unit tests + smoke tests (all platforms)
-2. **build** job - Binary compilation (depends on test success)
-3. **integration-tests** job - Comprehensive runtime scenarios (depends on build success)
-4. **create-release** job - GitHub release creation (depends on integration-tests success)
-5. **publish-pypi** job - PyPI package publication (depends on release creation)
-6. **update-homebrew** job - Homebrew formula update (depends on PyPI publication)
+1. **test** job - Unit tests + integration tests (all platforms)
+2. **build** job - NativeAOT binary compilation (depends on test success)
+3. **pack-nuget** job - NuGet package creation (depends on test success)
+4. **integration-tests** job - Binary integration tests (depends on build success)
+5. **release-validation** job - Isolated binary validation (depends on integration-tests)
+6. **publish-release** job - GitHub Release + NuGet.org push (depends on all previous)
 
 Each stage must succeed before proceeding to the next, ensuring only fully validated releases reach users.
 
 ### Test Matrix
 
-All integration tests run on:
-- **Linux**: ubuntu-24.04 (x86_64)
-- **macOS Intel**: macos-13 (x86_64) 
-- **macOS Apple Silicon**: macos-14 (arm64)
+All tests run on:
+- **Linux x64**: ubuntu-24.04
+- **Linux ARM64**: ubuntu-24.04-arm
+- **macOS Intel**: macos-15-intel
+- **macOS Apple Silicon**: macos-latest (arm64)
+- **Windows x64**: windows-latest
 
-**Python Version**: 3.12 (standardized across all environments)
-**Package Manager**: uv (for fast dependency management and virtual environments)
+**.NET Version**: 10.0.x
 
 ## What the Tests Verify
 
-### Smoke Tests Verify:
-- ✅ Runtime setup scripts execute successfully
-- ✅ Binaries are downloaded and installed correctly
-- ✅ Binaries respond to basic commands
-- ✅ APM can detect installed runtimes
-- ✅ Configuration files are created properly
-- ✅ Workflow compilation works (without execution)
+### Unit & Integration Tests Verify:
+- ✅ YAML manifest parsing and validation
+- ✅ Dependency resolution and tree building
+- ✅ Compilation engine correctness
+- ✅ Primitive discovery and conflict detection
+- ✅ Runtime adapter functionality
+- ✅ CLI command parsing and execution
+- ✅ Git-based package download
 
-### E2E Tests Verify:
-- ✅ Complete golden scenario from README works
-- ✅ `apm runtime setup copilot` installs and configures GitHub Copilot CLI
-- ✅ `apm runtime setup codex` installs and configures Codex
-- ✅ `apm runtime setup llm` installs and configures LLM
-- ✅ `apm init my-hello-world` creates project correctly
-- ✅ `apm install` handles dependencies
-- ✅ `apm run start --param name="Tester"` executes successfully
-- ✅ Real API calls to GitHub Models work
-- ✅ Parameter substitution works correctly
-- ✅ MCP integration functions (GitHub tools)
-- ✅ Binary artifacts work across platforms
-- ✅ Release pipeline integrity (GitHub Release → PyPI → Homebrew)
+### Binary Validation Tests Verify:
+- ✅ NativeAOT binary starts and responds to commands
+- ✅ `apm init` creates correct project structure
+- ✅ `apm compile --dry-run` works without dependencies
+- ✅ Binaries work in isolation (no source checkout)
+- ✅ Cross-platform binary compatibility
 
 ## Benefits
 
 ### **Speed vs Confidence Balance**
-- **Smoke tests**: Fast feedback (2-3 min) on every change
-- **E2E tests**: High confidence (15 min) only when shipping
+- **Unit tests**: Fast feedback (~1 min) on every change
+- **Integration tests**: Medium confidence (~3 min) on every change
+- **Binary validation**: High confidence (~10 min) only when shipping
 
 ### **Cost Efficiency**
-- Smoke tests use no API credits
-- E2E tests only run on releases (minimizing API usage)
+- Unit and integration tests use no API credits
+- Binary validation only runs on releases
 - Manual workflow dispatch for test builds without publishing
 
 ### **Platform Coverage**
-- Tests run on all supported platforms
-- Catches platform-specific runtime issues
+- Tests run on all 5 supported platforms (including Windows native)
+- Catches platform-specific NativeAOT issues
+- Windows native support — no WSL required
 
 ### **Release Confidence**
-- E2E tests must pass before any publishing steps
+- Binary integration tests must pass before any publishing steps
 - Multi-stage release pipeline ensures quality gates
-- Guarantees shipped releases work end-to-end
-- Users can trust the README golden scenario
+- NuGet package validated before push
 - Cross-platform binary verification
-- Automatic Homebrew formula updates
 
 ## Debugging Test Failures
 
-### Smoke Test Failures
-- Check runtime setup script output
-- Verify platform compatibility
-- Check network connectivity for downloads
+### Unit/Integration Test Failures
+- Check test output with `dotnet test --verbosity detailed`
+- Review specific test: `dotnet test --filter "FullyQualifiedName~TestName"`
+- Ensure .NET 10 SDK is installed: `dotnet --version`
 
-### E2E Test Failures  
-- **Use the unified integration script first**: Run `./scripts/test-integration.sh` to reproduce the exact CI environment locally
-- Verify `GITHUB_TOKEN` has required permissions (`models:read`)
-- Ensure both `GITHUB_TOKEN` and `GITHUB_MODELS_KEY` environment variables are set
-- Check GitHub Models API availability
-- Review actual vs expected output
-- Test locally with same environment
-- For hanging issues: Check command transformation in script runner (codex expects prompt content, not file paths)
+### Binary Validation Failures
+- Verify NativeAOT publish succeeded without warnings
+- Check platform-specific runtime identifier matches
+- Review binary size (unexpectedly small may indicate build issues)
+- Test locally with same RID: `dotnet publish src/Apm.Cli -c Release -r <rid> -p:NativeAot=true`
 
 ## Adding New Tests
 
-### For New Runtime Support:
-1. Add smoke test for runtime setup
-2. Add E2E test for golden scenario with new runtime
-3. Update CI matrix if new platform support
-
 ### For New Features:
-1. Add smoke test for compilation/validation
-2. Add E2E test if feature requires API calls
-3. Keep tests focused and fast
+1. Add unit tests in `tests/Apm.Cli.Tests/` matching the source structure
+2. Use `FakeItEasy` for dependency mocking
+3. Use `AwesomeAssertions` for fluent assertion syntax
+4. If feature requires API calls, consider integration test category
+
+### For New Runtime Support:
+1. Add adapter tests
+2. Add integration test for runtime setup
+3. Update CI matrix if new platform support needed
 
 ---
 
-This testing strategy ensures we ship with confidence while maintaining fast development cycles.
+This testing strategy ensures we ship with confidence while maintaining fast development cycles across all supported platforms.

@@ -1,5 +1,7 @@
 # APM Compilation: Mathematical Context Optimization
 
+> **Note:** Algorithm pseudocode in this document uses Python syntax for readability. The .NET implementation is in `src/Apm.Cli/Compilation/`.
+
 **Solving the AI agent scalability problem through constraint satisfaction optimization**
 
 APM's compilation system implements a mathematically rigorous solution to the **context pollution problem** that degrades AI agent performance as projects grow. Through constraint satisfaction optimization and hierarchical coverage guarantees, `apm compile` transforms scattered primitives into optimized context files for every major AI coding agent.
@@ -492,5 +494,5 @@ apm compile --verbose
 apm init my-project && cd my-project && apm compile
 ```
 
-**Technical Implementation**: [`src/apm_cli/compilation/`](../src/apm_cli/compilation/)  
-**Mathematical Core**: [`context_optimizer.py`](../src/apm_cli/compilation/context_optimizer.py)
+**Technical Implementation**: [`src/Apm.Cli/Compilation/`](../src/Apm.Cli/Compilation/)  
+**Mathematical Core**: [`ContextOptimizer.cs`](../src/Apm.Cli/Compilation/ContextOptimizer.cs)

@@ -1,5 +1,7 @@
 # Enhanced Primitive Discovery System
 
+> **Note:** This document describes the design of the enhanced primitive discovery system. Code examples reference the original Python implementation for algorithmic reference. The .NET port in `src/Apm.Cli/Primitives/` implements the same logic in C#.
+
 This document describes the enhanced primitive discovery system implemented for APM CLI, providing dependency support with source tracking and conflict detection.
 
 ## Overview
@@ -208,7 +210,7 @@ Comprehensive test suite in `tests/test_enhanced_discovery.py` covers:
 Run tests with:
 
 ```bash
-python -m pytest tests/test_enhanced_discovery.py -v
+dotnet test --filter "FullyQualifiedName~Discovery"
 ```
 
 ## Future Enhancements

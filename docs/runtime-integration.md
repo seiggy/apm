@@ -17,7 +17,7 @@ APM acts as a runtime package manager, downloading and configuring LLM runtimes 
 ### Install APM and Setup Runtime
 ```bash
 # 1. Install APM
-curl -sSL https://raw.githubusercontent.com/danielmeppiel/apm/main/install.sh | sh
+dotnet tool install -g apm-cli
 
 # 2. Setup AI runtime (downloads and configures automatically)
 apm runtime setup copilot
@@ -115,7 +115,7 @@ apm runtime setup llm
 ```
 
 This automatically:
-- Creates a Python virtual environment
+- Creates an isolated environment for the `llm` CLI tool
 - Installs the `llm` library and dependencies
 - Creates a wrapper script at `~/.apm/runtimes/llm`
 
@@ -217,17 +217,17 @@ APM's runtime system is designed to be extensible. To add support for a new runt
 
 APM's runtime system consists of three main components:
 
-1. **Runtime Adapter** (`src/apm_cli/runtime/`) - Python interface for executing prompts
-2. **Setup Script** (`scripts/runtime/`) - Shell script for installation and configuration  
-3. **Runtime Manager** (`src/apm_cli/runtime/manager.py`) - Orchestrates installation and discovery
+1. **Runtime Adapter** (`src/Apm.Cli/Runtime/`) - .NET interface for executing prompts
+2. **Setup Logic** (`src/Apm.Cli/Runtime/`) - Runtime installation and configuration
+3. **Runtime Manager** (`src/Apm.Cli/Runtime/`) - Orchestrates installation and discovery
 
 ### Adding a New Runtime
 
-1. **Create Runtime Adapter** - Extend `RuntimeAdapter` in `src/apm_cli/runtime/your_runtime.py`
-2. **Create Setup Script** - Add installation script in `scripts/runtime/setup-your-runtime.sh`
-3. **Register Runtime** - Add entry to `supported_runtimes` in `RuntimeManager`
-4. **Update CLI** - Add runtime to command choices in `cli.py`
-5. **Update Factory** - Add runtime to `RuntimeFactory`
+1. **Create Runtime Adapter** - Implement the runtime adapter interface in `src/Apm.Cli/Runtime/`
+2. **Add Setup Logic** - Add installation logic for the new runtime
+3. **Register Runtime** - Add entry to supported runtimes in the RuntimeManager
+4. **Update CLI** - Add runtime to command choices
+5. **Add Tests** - Add unit tests in `tests/Apm.Cli.Tests/Runtime/`
 
 ### Best Practices
 

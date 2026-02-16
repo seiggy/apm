@@ -1,11 +1,12 @@
-# APM – Agent Package Manager
+# APM – Agent Package Manager (.NET Port)
 
-[![PyPI version](https://badge.fury.io/py/apm-cli.svg)](https://badge.fury.io/py/apm-cli)
-[![CI/CD Pipeline](https://github.com/danielmeppiel/apm/actions/workflows/build-release.yml/badge.svg)](https://github.com/danielmeppiel/apm/actions/workflows/build-release.yml)
-[![Downloads](https://img.shields.io/pypi/dm/apm-cli.svg)](https://pypi.org/project/apm-cli/)
-[![GitHub stars](https://img.shields.io/github/stars/danielmeppiel/apm.svg?style=social&label=Star)](https://github.com/danielmeppiel/apm/stargazers)
+[![NuGet version](https://img.shields.io/nuget/v/apm-cli.svg)](https://www.nuget.org/packages/apm-cli)
+[![CI/CD Pipeline](https://github.com/seiggy/apm-dotnet/actions/workflows/build-release.yml/badge.svg)](https://github.com/seiggy/apm-dotnet/actions/workflows/build-release.yml)
+[![GitHub stars](https://img.shields.io/github/stars/seiggy/apm-dotnet.svg?style=social&label=Star)](https://github.com/seiggy/apm-dotnet/stargazers)
 
-**An open-source, community-driven dependency manager for AI agents.** `apm.yml` declares the skills, prompts, instructions, and tools your project needs — so every developer gets the same agent setup. Packages can depend on packages, and APM resolves the full tree.
+**A .NET 10 NativeAOT port of APM** — the open-source, community-driven dependency manager for AI agents. Built to support environments where Python is unavailable, and to provide native Windows support without WSL.
+
+This is a feature-parity fork of [microsoft/apm](https://github.com/microsoft/apm), reimplemented in C# with NativeAOT compilation for fast, self-contained binaries on every platform.
 
 Think `package.json`, `requirements.txt`, or `Cargo.toml` — but for AI agent configuration.
 
@@ -63,17 +64,18 @@ All declared in one manifest. All installed with one command — including trans
 **1. Install APM**
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/danielmeppiel/apm/main/install.sh | sh
+dotnet tool install -g apm-cli
 ```
 
 <details>
-<summary>Homebrew or pip</summary>
+<summary>PowerShell installer or NativeAOT binary</summary>
 
-```bash
-brew tap danielmeppiel/apm-cli && brew install apm-cli
-# or
-pip install apm-cli
+```powershell
+# PowerShell (cross-platform, pwsh 7+)
+irm https://raw.githubusercontent.com/seiggy/apm-dotnet/main/install.ps1 | iex
 ```
+
+Or download a NativeAOT binary from [GitHub Releases](https://github.com/seiggy/apm-dotnet/releases/latest).
 </details>
 
 **2. Add packages to your project**
@@ -169,7 +171,7 @@ APM installs from any GitHub or Azure DevOps repo — no special packaging requi
 | [DevExpGbb/platform-mode](https://github.com/DevExpGbb/platform-mode) | Platform engineering prompts & agents |
 | [github/awesome-copilot](https://github.com/github/awesome-copilot) | Community prompts, agents & instructions for Copilot |
 | [anthropics/courses](https://github.com/anthropics/courses) | Anthropic's official skills & prompt library |
-| [Add yours →](https://github.com/danielmeppiel/apm/discussions/new) | |
+| [Add yours →](https://github.com/seiggy/apm-dotnet/discussions/new) | |
 
 ---
 

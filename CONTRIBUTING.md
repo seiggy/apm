@@ -1,6 +1,8 @@
-# Contributing to apm-cli
+# Contributing to APM CLI (.NET)
 
-Thank you for considering contributing to apm-cli! This document outlines the process for contributing to the project.
+Thank you for considering contributing to the .NET port of APM CLI! This is a community-driven fork that maintains feature parity with the original Python implementation, targeting environments where Python is unavailable or Windows users without WSL.
+
+This document outlines the process for contributing to the project.
 
 ## Code of Conduct
 
@@ -12,7 +14,7 @@ By participating in this project, you agree to abide by our [Code of Conduct](CO
 
 Before submitting a bug report:
 
-1. Check the [GitHub Issues](https://github.com/username/apm-cli/issues) to see if the bug has already been reported.
+1. Check the [GitHub Issues](https://github.com/seiggy/apm-dotnet/issues) to see if the bug has already been reported.
 2. Update your copy of the code to the latest version to ensure the issue hasn't been fixed.
 
 When submitting a bug report:
@@ -21,6 +23,7 @@ When submitting a bug report:
 2. Include detailed steps to reproduce the bug.
 3. Describe the expected behavior and what actually happened.
 4. Include any relevant logs or error messages.
+5. Specify your OS, .NET SDK version, and runtime (e.g. NativeAOT binary vs `dotnet run`).
 
 ### Suggesting Enhancements
 
@@ -35,8 +38,8 @@ Enhancement suggestions are welcome! Please:
 1. Fork the repository.
 2. Create a new branch for your feature/fix: `git checkout -b feature/your-feature-name` or `git checkout -b fix/issue-description`.
 3. Make your changes.
-4. Run tests: `uv run pytest`
-5. Ensure your code follows our coding style (we use Black and isort).
+4. Run tests: `dotnet test`
+5. Ensure your code compiles cleanly (`TreatWarningsAsErrors` is enabled).
 6. Commit your changes with a descriptive message.
 7. Push to your fork.
 8. Submit a pull request.
@@ -64,61 +67,91 @@ Enhancement suggestions are welcome! Please:
 
 **Note**: Labels are used to automatically categorize changes in release notes. The correct label helps maintainers and users understand what changed in each release.
 
-## Development Environment
+## Prerequisites
 
-This project uses uv to manage Python environments and dependencies:
+- [.NET 10 SDK](https://dotnet.microsoft.com/download) or later
+- Git
+
+## Development Environment
 
 ```bash
 # Clone the repository
-git clone <this-repo-url>
-cd apm
+git clone https://github.com/seiggy/apm-dotnet.git
+cd apm-dotnet
 
-# Create a virtual environment and install dependencies
-uv venv
-source venv/bin/activate  # On Windows, use: venv\Scripts\activate
-uv pip install -e ".[dev]"
+# Restore dependencies
+dotnet restore
+
+# Build
+dotnet build
+
+# Run from source
+dotnet run --project src/Apm.Cli
 ```
 
 ## Testing
 
-We use pytest for testing. The project uses `uv` to manage virtual environments and dependencies — the recommended way to run tests is:
+We use **xUnit** for unit testing with **FakeItEasy** for mocking and **AwesomeAssertions** for fluent assertions.
 
 ```bash
-uv run pytest
-# install dev dependencies (creates .venv managed by uv)
-uv sync --extra dev
+# Run all tests
+dotnet test
 
-# run the test suite
-uv run pytest -q
+# Run tests with detailed output
+dotnet test --verbosity normal
+
+# Run tests with coverage (requires coverlet)
+dotnet test --collect:"XPlat Code Coverage"
 ```
 
-If you don't have `uv` available, you can use a standard Python venv and pip:
+## Project Structure
 
-```bash
-# create and activate a venv (POSIX / WSL)
-python -m venv .venv
-source .venv/bin/activate
-
-# install this package in editable mode and test deps
-pip install -U pip
-pip install -e .[dev]
-
-# run tests
-pytest -q
+```
+apm/
+├── apm.slnx                    # Solution file
+├── Directory.Build.props        # Shared build properties
+├── Directory.Packages.props     # Central package version management
+├── src/
+│   └── Apm.Cli/                # Main CLI application
+│       ├── Adapters/
+│       ├── Commands/
+│       ├── Compilation/
+│       ├── Core/
+│       ├── Dependencies/
+│       ├── Integration/
+│       ├── Models/
+│       ├── Output/
+│       ├── Primitives/
+│       ├── Registry/
+│       ├── Runtime/
+│       ├── Utils/
+│       ├── Workflow/
+│       └── Program.cs
+├── tests/
+│   └── Apm.Cli.Tests/          # Unit & integration tests
+├── templates/                   # APM project templates
+└── docs/                        # Documentation
 ```
 
 ## Coding Style
 
 This project follows:
-- [PEP 8](https://pep8.org/) for Python style guidelines
-- We use Black for code formatting and isort for import sorting
+- C# latest language features (configured via `Directory.Build.props`)
+- **Nullable reference types** are enabled project-wide
+- **Implicit usings** are enabled
+- **TreatWarningsAsErrors** is enabled — all warnings must be resolved
+- Follow standard [.NET naming conventions](https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/coding-style/coding-conventions)
 
-You can run these tools with:
+## NativeAOT Considerations
 
-```bash
-uv run black .
-uv run isort .
-```
+This project supports NativeAOT compilation for self-contained, single-file binaries. When contributing:
+
+- Avoid reflection-heavy patterns that break AOT trimming
+- Test your changes with a NativeAOT publish when modifying serialization or dynamic code:
+  ```bash
+  dotnet publish src/Apm.Cli -c Release -r win-x64 -p:NativeAot=true
+  ```
+- Supported RIDs: `win-x64`, `linux-x64`, `linux-arm64`, `osx-x64`, `osx-arm64`
 
 ## Documentation
 

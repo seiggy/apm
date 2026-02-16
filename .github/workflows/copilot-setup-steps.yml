@@ -30,16 +30,16 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v5
       
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
         with:
-          python-version: '3.12'
+          dotnet-version: '10.0.x'
       
-      - name: Install uv
-        uses: astral-sh/setup-uv@v4
+      - name: Restore dependencies
+        run: dotnet restore
       
-      - name: Sync dependencies with uv
-        run: uv sync
+      - name: Build
+        run: dotnet build --no-restore
       
-      - name: Verify installation
-        run: uv run apm --version
+      - name: Verify build
+        run: dotnet run --project src/Apm.Cli -- --version

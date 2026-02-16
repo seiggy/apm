@@ -3,53 +3,34 @@ APPROACH.md
 next-steps.md
 apm-action-plan.md
 
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-build/build/
-build/apm/
-*.bak
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
+# .NET
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.nupkg
+*.snupkg
+publish/
+TestResults/
+BenchmarkDotNet.Artifacts/
+*.DotSettings.user
 
-# Virtual Environment
-venv/
-.env
-.venv
-env/
-ENV/
+# Build output
+dist/
 
 # IDEs and editors
 .idea/
+.vs/
 *.swp
 *.swo
 *~
 .DS_Store
 
 # Test coverage
-.coverage
-.coverage.*
-htmlcov/
-.tox/
-.pytest_cache/
-.mypy_cache/
 coverage.xml
 *.cover
+htmlcov/
 
 # Documentation
 docs/_build/
@@ -57,6 +38,7 @@ docs/wip/
 
 # Local development
 *.log
+.env
 .env.local
 .env.*.local
 AGENTS.md

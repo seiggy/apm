@@ -9,8 +9,8 @@ Complete command-line interface reference for Agent Package Manager (APM).
 export GITHUB_APM_PAT=your_fine_grained_token_here
 # Optional: export GITHUB_TOKEN=your_models_token           # For Codex CLI with GitHub Models
 
-# 2. Install APM CLI (GitHub org members)
-curl -sSL https://raw.githubusercontent.com/danielmeppiel/apm/main/install.sh | sh
+# 2. Install APM CLI
+dotnet tool install -g apm-cli
 
 # 3. Setup runtime
 apm runtime setup copilot  
@@ -24,28 +24,36 @@ apm compile && apm run start --param name="<YourGitHubHandle>"
 
 ## Installation
 
-### Quick Install (Recommended)
+### .NET Global Tool (Recommended)
 ```bash
-curl -sSL https://raw.githubusercontent.com/danielmeppiel/apm/main/install.sh | sh
+dotnet tool install -g apm-cli
+```
+
+### PowerShell Installer (Cross-platform, pwsh 7+)
+```powershell
+irm https://raw.githubusercontent.com/seiggy/apm-dotnet/main/install.ps1 | iex
 ```
 
 ### Manual Download
-Download from [GitHub Releases](https://github.com/danielmeppiel/apm/releases/latest):
+Download from [GitHub Releases](https://github.com/seiggy/apm-dotnet/releases/latest):
 ```bash
-# Linux x86_64
-curl -L https://github.com/danielmeppiel/apm/releases/latest/download/apm-linux-x86_64 -o apm && chmod +x apm
+# Linux x64
+curl -L https://github.com/seiggy/apm-dotnet/releases/latest/download/apm-linux-x64.tar.gz | tar -xz
 
 # macOS Intel
-curl -L https://github.com/danielmeppiel/apm/releases/latest/download/apm-darwin-x86_64 -o apm && chmod +x apm
+curl -L https://github.com/seiggy/apm-dotnet/releases/latest/download/apm-osx-x64.tar.gz | tar -xz
 
 # macOS Apple Silicon  
-curl -L https://github.com/danielmeppiel/apm/releases/latest/download/apm-darwin-arm64 -o apm && chmod +x apm
+curl -L https://github.com/seiggy/apm-dotnet/releases/latest/download/apm-osx-arm64.tar.gz | tar -xz
+
+# Windows x64
+# Download apm-win-x64.zip from GitHub Releases
 ```
 
 ### From Source (Developers)
 ```bash
-git clone https://github.com/danielmeppiel/apm-cli.git
-cd apm-cli && pip install -e .
+git clone https://github.com/seiggy/apm-dotnet.git
+cd apm && dotnet run --project src/Apm.Cli
 ```
 
 ## Global Options
@@ -323,7 +331,7 @@ This check is non-blocking and cached to avoid slowing down the CLI.
 **Manual Update:**
 If the automatic update fails, you can always update manually:
 ```bash
-curl -sSL https://raw.githubusercontent.com/danielmeppiel/apm/main/install.sh | sh
+dotnet tool update -g apm-cli
 ```
 
 ### `apm deps` - 🔗 Manage APM package dependencies

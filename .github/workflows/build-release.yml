@@ -1,7 +1,4 @@
-name: CI/CD Pipeline
-
-env:
-  PYTHON_VERSION: '3.12'  # Standardize on 3.12 for Ubuntu 24.04 LTS compatibility
+name: .NET CI/CD Pipeline
 
 on:
   push:
@@ -11,14 +8,14 @@ on:
       - 'docs/**'
       - '.gitignore'
       - 'LICENSE'
-  pull_request: 
+  pull_request:
     branches: [ main ]
     paths-ignore:
       - 'docs/**'
       - '.gitignore'
       - 'LICENSE'
   schedule:
-    # Run daily at 04:00 UTC (6 AM CEST)
+    # Run daily at 04:00 UTC
     - cron: '0 4 * * *'
   workflow_dispatch:
     inputs:
@@ -28,9 +25,13 @@ on:
         default: true
         type: boolean
 
+env:
+  DOTNET_VERSION: '10.0.x'
+
 jobs:
   # Always run tests first with matrix strategy
   test:
+    name: Test
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -43,486 +44,436 @@ jobs:
             arch: arm64
             platform: linux
           - os: macos-15-intel
-            arch: x86_64  
+            arch: x86_64
             platform: darwin
           - os: macos-latest
             arch: arm64
             platform: darwin
-    
+          - os: windows-latest
+            arch: x64
+            platform: windows
+
     steps:
-    - uses: actions/checkout@v4
-    
-    - name: Set up Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '24'
-    
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: ${{ env.PYTHON_VERSION }}
-    
-    - name: Setup build environment (macOS-15 Intel)
-      if: matrix.os == 'macos-15-intel'
-      run: |
-        # Install Xcode Command Line Tools
-        sudo xcode-select --install 2>/dev/null || true
-        # Wait for installation to complete
-        until xcode-select -p >/dev/null 2>&1; do sleep 5; done
-    
-    - name: Install uv
-      run: |
-        curl -LsSf https://astral.sh/uv/install.sh | sh
-        echo "$HOME/.cargo/bin" >> $GITHUB_PATH
-    
-    - name: Cache uv environments
-      uses: actions/cache@v3
-      with:
-        path: |
-          ~/.cache/uv
-          ~/.local/share/uv
-        key: ${{ runner.os }}-uv-${{ hashFiles('**/pyproject.toml') }}
-        restore-keys: |
-          ${{ runner.os }}-uv-
-    
-    - name: Install dependencies
-      run: uv sync --extra dev
-    
-    - name: Test with pytest
-      run: uv run pytest tests/unit tests/test_console.py
+      - uses: actions/checkout@v4
 
-    - name: Run smoke tests
-      env:
-        GITHUB_TOKEN: ${{ secrets.GH_MODELS_PAT }}    # Models access
-        GITHUB_APM_PAT: ${{ secrets.GH_CLI_PAT }}     # APM module access
-      run: uv run pytest tests/integration/test_runtime_smoke.py -v
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
 
-  # Build binaries
+      - name: Restore
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --no-restore --configuration Release
+
+      - name: Test
+        run: dotnet test --no-build --configuration Release --verbosity normal
+
+  # Build NativeAOT binaries + NuGet package
   build:
-    name: Build APM Binary
+    name: Build (${{ matrix.artifact }})
     needs: [test]
+    runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         include:
           - os: ubuntu-24.04
+            rid: linux-x64
             platform: linux
-            arch: x86_64
-            binary_name: apm-linux-x86_64
+            artifact: apm-linux-x64
           - os: ubuntu-24.04-arm
+            rid: linux-arm64
             platform: linux
-            arch: arm64
-            binary_name: apm-linux-arm64
+            artifact: apm-linux-arm64
           - os: macos-15-intel
+            rid: osx-x64
             platform: darwin
-            arch: x86_64
-            binary_name: apm-darwin-x86_64
+            artifact: apm-osx-x64
           - os: macos-latest
+            rid: osx-arm64
             platform: darwin
-            arch: arm64
-            binary_name: apm-darwin-arm64
-    
-    runs-on: ${{ matrix.os }}
+            artifact: apm-osx-arm64
+          - os: windows-latest
+            rid: win-x64
+            platform: windows
+            artifact: apm-win-x64
     permissions:
-      contents: write  # Required for release uploads
-    
+      contents: read
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
-      - name: Set up Python
-        uses: actions/setup-python@v5
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
         with:
-          python-version: ${{ env.PYTHON_VERSION }}
-      
-      - name: Install UPX (Linux)
-        if: matrix.platform == 'linux'
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Publish NativeAOT (${{ matrix.rid }})
+        run: >
+          dotnet publish src/Apm.Cli/Apm.Cli.csproj
+          --configuration Release
+          --runtime ${{ matrix.rid }}
+          --output ./publish/${{ matrix.artifact }}
+          -p:NativeAot=true
+          -p:PublishTrimmed=true
+          -p:StripSymbols=true
+
+      - name: Create tarball (Linux/macOS)
+        if: runner.os != 'Windows'
         run: |
-          sudo apt-get update
-          sudo apt-get install -y upx-ucl
-      
-      - name: Install UPX and XCode (macOS)
-        if: matrix.platform == 'darwin'
+          cd publish
+          tar -czf ${{ matrix.artifact }}.tar.gz ${{ matrix.artifact }}
+          if command -v sha256sum &> /dev/null; then
+            sha256sum ${{ matrix.artifact }}.tar.gz > ${{ matrix.artifact }}.tar.gz.sha256
+          elif command -v shasum &> /dev/null; then
+            shasum -a 256 ${{ matrix.artifact }}.tar.gz > ${{ matrix.artifact }}.tar.gz.sha256
+          fi
+
+      - name: Create zip (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
         run: |
-          # Install Xcode Command Line Tools
-          sudo xcode-select --install 2>/dev/null || true
-          # Wait for installation to complete
-          until xcode-select -p >/dev/null 2>&1; do sleep 5; done
-          brew install upx
-      
-      - name: Install uv
-        run: |
-          curl -LsSf https://astral.sh/uv/install.sh | sh
-          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
-      
-      - name: Install Python dependencies
-        run: |
-          uv sync --extra dev --extra build
-      
-      - name: Build binary
-        run: |
-          chmod +x scripts/build-binary.sh
-          uv run ./scripts/build-binary.sh
-      
-      - name: Upload binary as workflow artifact
+          cd publish
+          Compress-Archive -Path ${{ matrix.artifact }} -DestinationPath ${{ matrix.artifact }}.zip
+          $hash = (Get-FileHash ${{ matrix.artifact }}.zip -Algorithm SHA256).Hash.ToLower()
+          "$hash  ${{ matrix.artifact }}.zip" | Out-File -Encoding ascii ${{ matrix.artifact }}.zip.sha256
+
+      - name: Upload binary artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.binary_name }}
+          name: ${{ matrix.artifact }}
           path: |
-            ./dist/${{ matrix.binary_name }}
-            ./dist/${{ matrix.binary_name }}.sha256
-            ./scripts/test-release-validation.sh
-            ./scripts/github-token-helper.sh
-          include-hidden-files: true  # Required to include .apm directories
-          retention-days: 30
+            publish/${{ matrix.artifact }}.tar.gz
+            publish/${{ matrix.artifact }}.tar.gz.sha256
+            publish/${{ matrix.artifact }}.zip
+            publish/${{ matrix.artifact }}.zip.sha256
+            publish/${{ matrix.artifact }}/
           if-no-files-found: error
+          retention-days: 30
 
-  # Integration tests with full source code access
+  # NuGet package (only needs one platform)
+  pack-nuget:
+    name: Pack NuGet
+    needs: [test]
+    runs-on: ubuntu-24.04
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Build Release
+        run: dotnet build --configuration Release
+
+      - name: Pack NuGet
+        run: dotnet pack --configuration Release --output ./nupkg
+
+      - name: Upload NuGet package
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuget-package
+          path: nupkg/*.nupkg
+          retention-days: 30
+
+  # Integration tests with binary artifact
   integration-tests:
-    name: Integration Tests
+    name: Integration Tests (${{ matrix.artifact }})
     needs: [test, build]
     strategy:
+      fail-fast: false
       matrix:
         include:
           - os: ubuntu-24.04
-            arch: x86_64
+            artifact: apm-linux-x64
             platform: linux
-            binary_name: apm-linux-x86_64
+            binary: apm
           - os: ubuntu-24.04-arm
-            arch: arm64
+            artifact: apm-linux-arm64
             platform: linux
-            binary_name: apm-linux-arm64
+            binary: apm
           - os: macos-15-intel
-            arch: x86_64
+            artifact: apm-osx-x64
             platform: darwin
-            binary_name: apm-darwin-x86_64
+            binary: apm
           - os: macos-latest
-            arch: arm64
+            artifact: apm-osx-arm64
             platform: darwin
-            binary_name: apm-darwin-arm64
-    
+            binary: apm
+          - os: windows-latest
+            artifact: apm-win-x64
+            platform: windows
+            binary: apm.exe
+
     runs-on: ${{ matrix.os }}
     permissions:
       contents: read
-      models: read  # Required for GitHub Models API access
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Download APM binary from build artifacts
         uses: actions/download-artifact@v4
         with:
-          name: ${{ matrix.binary_name }}
-          path: ./
-      
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '24'
-      
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
+          name: ${{ matrix.artifact }}
+          path: ./artifact
 
-      - name: Setup build environment (macOS-15-intel)
-        if: matrix.os == 'macos-15-intel'
-        run: |
-          # Install Xcode Command Line Tools
-          sudo xcode-select --install 2>/dev/null || true
-          # Wait for installation to complete
-          until xcode-select -p >/dev/null 2>&1; do sleep 5; done
-      
-      - name: Install uv
-        run: |
-          curl -LsSf https://astral.sh/uv/install.sh | sh
-          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
-      
-      - name: Install test dependencies
-        run: uv sync --extra dev
-      
-      - name: Run integration tests
+      - name: Run integration tests (Linux/macOS)
+        if: runner.os != 'Windows'
         env:
-          APM_E2E_TESTS: "1"
-          GITHUB_TOKEN: ${{ secrets.GH_MODELS_PAT }}    # Models access
-          GITHUB_APM_PAT: ${{ secrets.GH_CLI_PAT }}    # Primary: APM module access
-          ADO_APM_PAT: ${{ secrets.ADO_APM_PAT }}      # Azure DevOps module access
+          GITHUB_TOKEN: ${{ secrets.GH_MODELS_PAT }}
+          GITHUB_APM_PAT: ${{ secrets.GH_CLI_PAT }}
+          ADO_APM_PAT: ${{ secrets.ADO_APM_PAT }}
         run: |
-          chmod +x scripts/test-integration.sh
-          uv run ./scripts/test-integration.sh
+          BINARY="./artifact/publish/${{ matrix.artifact }}/${{ matrix.binary }}"
+          chmod +x "$BINARY"
+
+          echo "=== Version check ==="
+          "$BINARY" --version
+
+          echo "=== Init test project ==="
+          mkdir -p /tmp/apm-integration-test
+          cd /tmp/apm-integration-test
+          "$GITHUB_WORKSPACE/artifact/publish/${{ matrix.artifact }}/${{ matrix.binary }}" init test-project
+          cd test-project
+
+          echo "=== Compile dry-run ==="
+          "$GITHUB_WORKSPACE/artifact/publish/${{ matrix.artifact }}/${{ matrix.binary }}" compile --dry-run
+
+          echo "=== Integration tests passed ==="
         timeout-minutes: 20
 
-# Release validation tests - Final pre-release validation of shipped binary
+      - name: Run integration tests (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_MODELS_PAT }}
+          GITHUB_APM_PAT: ${{ secrets.GH_CLI_PAT }}
+          ADO_APM_PAT: ${{ secrets.ADO_APM_PAT }}
+        run: |
+          $Binary = ".\artifact\publish\${{ matrix.artifact }}\${{ matrix.binary }}"
+
+          Write-Host "=== Version check ==="
+          & $Binary --version
+
+          Write-Host "=== Init test project ==="
+          $TestDir = Join-Path $env:TEMP "apm-integration-test"
+          New-Item -ItemType Directory -Force -Path $TestDir | Out-Null
+          Set-Location $TestDir
+          & "$env:GITHUB_WORKSPACE\artifact\publish\${{ matrix.artifact }}\${{ matrix.binary }}" init test-project
+          Set-Location test-project
+
+          Write-Host "=== Compile dry-run ==="
+          & "$env:GITHUB_WORKSPACE\artifact\publish\${{ matrix.artifact }}\${{ matrix.binary }}" compile --dry-run
+
+          Write-Host "=== Integration tests passed ==="
+        timeout-minutes: 20
+
+  # Release validation - isolated binary testing without source checkout
   release-validation:
-    name: Release Validation
+    name: Release Validation (${{ matrix.artifact }})
     needs: [test, build, integration-tests]
     strategy:
+      fail-fast: false
       matrix:
         include:
           - os: ubuntu-24.04
-            arch: x86_64
+            artifact: apm-linux-x64
             platform: linux
-            binary_name: apm-linux-x86_64
+            binary: apm
           - os: ubuntu-24.04-arm
-            arch: arm64
+            artifact: apm-linux-arm64
             platform: linux
-            binary_name: apm-linux-arm64
+            binary: apm
           - os: macos-15-intel
-            arch: x86_64
+            artifact: apm-osx-x64
             platform: darwin
-            binary_name: apm-darwin-x86_64
+            binary: apm
           - os: macos-latest
-            arch: arm64
+            artifact: apm-osx-arm64
             platform: darwin
-            binary_name: apm-darwin-arm64
-    
+            binary: apm
+          - os: windows-latest
+            artifact: apm-win-x64
+            platform: windows
+            binary: apm.exe
+
     runs-on: ${{ matrix.os }}
     permissions:
       contents: read
-      models: read  # Required for GitHub Models API access
-    
-    steps:
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '24'
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-      
-      - name: Setup build environment (macOS-15-intel)
-        if: matrix.os == 'macos-15-intel'
+    steps:
+      - name: Set isolated test path
+        id: paths
+        shell: bash
         run: |
-          # Install Xcode Command Line Tools
-          sudo xcode-select --install 2>/dev/null || true
-          # Wait for installation to complete
-          until xcode-select -p >/dev/null 2>&1; do sleep 5; done
-          
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            echo "isolated_dir=$RUNNER_TEMP/apm-isolated-test" >> $GITHUB_OUTPUT
+          else
+            echo "isolated_dir=/tmp/apm-isolated-test" >> $GITHUB_OUTPUT
+          fi
+
       - name: Download APM binary from build artifacts
         uses: actions/download-artifact@v4
         with:
-          name: ${{ matrix.binary_name }}
-          path: /tmp/apm-isolated-test/
-      
-      - name: Make binary executable and verify isolation
-        run: |
-          cd /tmp/apm-isolated-test
-          
-          # Debug: List the downloaded structure
-          echo "Downloaded structure:"
-          find . -name "apm" -type f
-          ls -la ./dist/
-          
-          # Make the binary executable
-          chmod +x ./dist/${{ matrix.binary_name }}/apm
-      
-      - name: Create APM symlink for testing
-        run: |
-          cd /tmp/apm-isolated-test
-          ln -s "$(pwd)/dist/${{ matrix.binary_name }}/apm" "$(pwd)/apm"
-          echo "/tmp/apm-isolated-test" >> $GITHUB_PATH
-      
-      - name: Run release validation tests
+          name: ${{ matrix.artifact }}
+          path: ${{ steps.paths.outputs.isolated_dir }}
+
+      - name: Validate binary in isolation (Linux/macOS)
+        if: runner.os != 'Windows'
         env:
-          APM_E2E_TESTS: "1"                           # Avoids interactive prompts for MCP env values with apm install
           GITHUB_TOKEN: ${{ secrets.GH_MODELS_PAT }}
-          GITHUB_APM_PAT: ${{ secrets.GH_CLI_PAT }}    # Primary: APM module access
-          ADO_APM_PAT: ${{ secrets.ADO_APM_PAT }}      # Azure DevOps module access
+          GITHUB_APM_PAT: ${{ secrets.GH_CLI_PAT }}
+          ADO_APM_PAT: ${{ secrets.ADO_APM_PAT }}
         run: |
-          cd /tmp/apm-isolated-test
-          chmod +x scripts/test-release-validation.sh
-          ./scripts/test-release-validation.sh
+          cd "${{ steps.paths.outputs.isolated_dir }}"
+          BINARY="./publish/${{ matrix.artifact }}/${{ matrix.binary }}"
+          chmod +x "$BINARY"
+
+          echo "=== Verify isolation (no source checkout) ==="
+          [ ! -f "apm.slnx" ] && echo "✅ No source code present" || (echo "❌ Source code found" && exit 1)
+
+          echo "=== Version check ==="
+          "$BINARY" --version
+
+          echo "=== Create test project ==="
+          "$BINARY" init release-validation-project
+          cd release-validation-project
+
+          echo "=== Compile dry-run ==="
+          "../$BINARY" compile --dry-run
+
+          echo "=== Release validation passed ==="
         timeout-minutes: 20
 
+      - name: Validate binary in isolation (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_MODELS_PAT }}
+          GITHUB_APM_PAT: ${{ secrets.GH_CLI_PAT }}
+          ADO_APM_PAT: ${{ secrets.ADO_APM_PAT }}
+        run: |
+          $IsolatedDir = "${{ steps.paths.outputs.isolated_dir }}"
+          Set-Location $IsolatedDir
+          $Binary = Join-Path $IsolatedDir "publish/${{ matrix.artifact }}/${{ matrix.binary }}"
 
-  create-release:
-    name: Create GitHub Release
-    needs: [test, build, integration-tests, release-validation]
-    if: github.ref_type == 'tag'  # All tags create GitHub releases
+          Write-Host "=== Verify isolation (no source checkout) ==="
+          if (Test-Path "apm.slnx") {
+            Write-Host "❌ Source code found"; exit 1
+          } else {
+            Write-Host "✅ No source code present"
+          }
+
+          Write-Host "=== Version check ==="
+          & $Binary --version
+
+          Write-Host "=== Create test project ==="
+          & $Binary init release-validation-project
+          Set-Location release-validation-project
+
+          Write-Host "=== Compile dry-run ==="
+          & $Binary compile --dry-run
+
+          Write-Host "=== Release validation passed ==="
+        timeout-minutes: 20
+
+  # Publish GitHub Release + NuGet
+  publish-release:
+    name: Publish GitHub Release & NuGet
+    needs: [test, build, pack-nuget, integration-tests, release-validation]
+    if: github.ref_type == 'tag'
     runs-on: ubuntu-latest
     permissions:
-      contents: write  # Required for release creation
+      contents: write
     outputs:
       is_prerelease: ${{ steps.release_type.outputs.is_prerelease }}
       is_private_repo: ${{ github.event.repository.private }}
-    
+
     steps:
       - name: Download all build artifacts
         uses: actions/download-artifact@v4
         with:
           path: ./dist
-      
+          pattern: apm-*
+          merge-multiple: false
+
       - name: Prepare release binaries
         run: |
-          # Debug: Show the actual downloaded structure
-          echo "Directory listing:"
-          ls -la ./dist
+          echo "Downloaded structure:"
+          find ./dist -type f | head -50
           echo ""
-          
-          # Create tar.gz archives from directory structure for release and Homebrew
-          cd dist
-          for binary in apm-linux-x86_64 apm-linux-arm64 apm-darwin-x86_64 apm-darwin-arm64; do
-            # With artifacts containing both scripts and dist/, the binary is in artifact/dist/binary/
-            artifact_dir="${binary}"
-            binary_dir="${artifact_dir}/dist/${binary}"
-            
-            if [ -d "$binary_dir" ] && [ -f "$binary_dir/apm" ]; then
-              echo "Processing $binary_dir directory..."
-              # Ensure the binary is executable before archiving
-              chmod +x "${binary_dir}/apm"
-              # Create tar.gz with preserved permissions, archiving ONLY the binary directory for release
-              tar -czf "${binary}.tar.gz" -C "${artifact_dir}/dist" "${binary}"
-              if command -v sha256sum &> /dev/null; then
-                sha256sum "${binary}.tar.gz" > "${binary}.tar.gz.sha256"
-              elif command -v shasum &> /dev/null; then
-                shasum -a 256 "${binary}.tar.gz" > "${binary}.tar.gz.sha256"
-              fi
-              echo "Created ${binary}.tar.gz"
+
+          mkdir -p ./release
+
+          # Process Unix artifacts (tar.gz)
+          for artifact in apm-linux-x64 apm-linux-arm64 apm-osx-x64 apm-osx-arm64; do
+            tarball="./dist/${artifact}/publish/${artifact}.tar.gz"
+            checksum="./dist/${artifact}/publish/${artifact}.tar.gz.sha256"
+            if [ -f "$tarball" ]; then
+              cp "$tarball" "./release/"
+              [ -f "$checksum" ] && cp "$checksum" "./release/"
+              echo "Prepared ${artifact}.tar.gz"
             else
-              echo "ERROR: Binary directory $binary_dir not found or $binary_dir/apm missing"
-              echo "Artifact directory contents:"
-              ls -la "$artifact_dir/" || echo "Directory $artifact_dir does not exist"
-              if [ -d "$artifact_dir/dist" ]; then
-                echo "Dist directory contents:"
-                ls -la "$artifact_dir/dist/"
-              fi
+              echo "ERROR: $tarball not found"
               exit 1
             fi
           done
-      
+
+          # Process Windows artifact (zip)
+          for artifact in apm-win-x64; do
+            zipfile="./dist/${artifact}/publish/${artifact}.zip"
+            checksum="./dist/${artifact}/publish/${artifact}.zip.sha256"
+            if [ -f "$zipfile" ]; then
+              cp "$zipfile" "./release/"
+              [ -f "$checksum" ] && cp "$checksum" "./release/"
+              echo "Prepared ${artifact}.zip"
+            else
+              echo "ERROR: $zipfile not found"
+              exit 1
+            fi
+          done
+
       - name: Determine release type
         id: release_type
         run: |
           TAG_NAME="${{ github.ref_name }}"
-          
-          # Check if tag matches stable semver pattern (e.g., v1.2.3, v0.2.0)
-          # Stable: starts with v, followed by digits.digits.digits, then end of string
           if [[ "$TAG_NAME" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
             echo "is_prerelease=false" >> $GITHUB_OUTPUT
             echo "Detected stable release: $TAG_NAME"
-          # Check PEP 440 prerelease patterns: v1.2.3a1, v1.2.3b1, v1.2.3rc1, etc.
-          elif [[ "$TAG_NAME" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(a|b|rc)[0-9]+$ ]]; then
-            echo "is_prerelease=true" >> $GITHUB_OUTPUT
-            echo "Detected PEP 440 prerelease: $TAG_NAME"
           else
-            echo "is_prerelease=true" >> $GITHUB_OUTPUT  
-            echo "Detected other prerelease: $TAG_NAME"
+            echo "is_prerelease=true" >> $GITHUB_OUTPUT
+            echo "Detected prerelease: $TAG_NAME"
           fi
-      
+
       - name: Create GitHub Release
-        id: release
         uses: softprops/action-gh-release@v2
         with:
           generate_release_notes: true
           prerelease: ${{ steps.release_type.outputs.is_prerelease == 'true' }}
           files: |
-            ./dist/apm-linux-x86_64.tar.gz
-            ./dist/apm-linux-x86_64.tar.gz.sha256
-            ./dist/apm-linux-arm64.tar.gz
-            ./dist/apm-linux-arm64.tar.gz.sha256
-            ./dist/apm-darwin-x86_64.tar.gz
-            ./dist/apm-darwin-x86_64.tar.gz.sha256
-            ./dist/apm-darwin-arm64.tar.gz
-            ./dist/apm-darwin-arm64.tar.gz.sha256
+            ./release/*.tar.gz
+            ./release/*.tar.gz.sha256
+            ./release/*.zip
+            ./release/*.zip.sha256
 
-  # Publish to PyPI (only stable releases from public repo)  
-  publish-pypi:
-    name: Publish to PyPI
-    runs-on: ubuntu-latest
-    needs: [test, build, integration-tests, release-validation, create-release]
-    if: github.ref_type == 'tag' && needs.create-release.outputs.is_private_repo != 'true' && needs.create-release.outputs.is_prerelease != 'true'
-    environment:
-      name: pypi
-      url: https://pypi.org/p/apm-cli
-    permissions:
-      id-token: write  # IMPORTANT: this permission is mandatory for trusted publishing
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Download NuGet package
+        uses: actions/download-artifact@v4
         with:
-          python-version: ${{ env.PYTHON_VERSION }}
-      
-      - name: Install build dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install build twine
-      
-      - name: Build Python package
-        run: python -m build
-      
-      - name: Check package
-        run: twine check dist/*
-      
-      - name: Publish to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          verbose: true
+          name: nuget-package
+          path: ./nupkg
 
-  # Update Homebrew formula (only stable releases from public repo)
-  update-homebrew:
-    name: Update Homebrew Formula
-    runs-on: ubuntu-latest
-    needs: [test, build, integration-tests, release-validation, create-release, publish-pypi]
-    if: github.ref_type == 'tag' && needs.create-release.outputs.is_private_repo != 'true' && needs.create-release.outputs.is_prerelease != 'true'
-    
-    steps:
-      - name: Extract SHA256 checksums from GitHub release
-        id: checksums
-        run: |
-          # Download the SHA256 checksum files from the GitHub release
-          RELEASE_TAG="${{ github.ref_name }}"
-          
-          echo "Downloading checksums for release $RELEASE_TAG"
-          
-          # Download checksum files directly from the release
-          curl -L -o apm-darwin-arm64.tar.gz.sha256 \
-            "https://github.com/${{ github.repository }}/releases/download/$RELEASE_TAG/apm-darwin-arm64.tar.gz.sha256"
-          curl -L -o apm-darwin-x86_64.tar.gz.sha256 \
-            "https://github.com/${{ github.repository }}/releases/download/$RELEASE_TAG/apm-darwin-x86_64.tar.gz.sha256"
-          curl -L -o apm-linux-x86_64.tar.gz.sha256 \
-            "https://github.com/${{ github.repository }}/releases/download/$RELEASE_TAG/apm-linux-x86_64.tar.gz.sha256"
-          curl -L -o apm-linux-arm64.tar.gz.sha256 \
-            "https://github.com/${{ github.repository }}/releases/download/$RELEASE_TAG/apm-linux-arm64.tar.gz.sha256"
-          
-          # Extract SHA256 checksums
-          DARWIN_ARM64_SHA=$(cat apm-darwin-arm64.tar.gz.sha256 | cut -d' ' -f1)
-          DARWIN_X86_64_SHA=$(cat apm-darwin-x86_64.tar.gz.sha256 | cut -d' ' -f1)
-          LINUX_X86_64_SHA=$(cat apm-linux-x86_64.tar.gz.sha256 | cut -d' ' -f1)
-          LINUX_ARM64_SHA=$(cat apm-linux-arm64.tar.gz.sha256 | cut -d' ' -f1)
-          
-          echo "darwin-arm64-sha=$DARWIN_ARM64_SHA" >> $GITHUB_OUTPUT
-          echo "darwin-x86_64-sha=$DARWIN_X86_64_SHA" >> $GITHUB_OUTPUT
-          echo "linux-x86_64-sha=$LINUX_X86_64_SHA" >> $GITHUB_OUTPUT
-          echo "linux-arm64-sha=$LINUX_ARM64_SHA" >> $GITHUB_OUTPUT
-          
-          echo "Darwin ARM64 SHA: $DARWIN_ARM64_SHA"
-          echo "Darwin x86_64 SHA: $DARWIN_X86_64_SHA"
-          echo "Linux x86_64 SHA: $LINUX_X86_64_SHA"
-          echo "Linux ARM64 SHA: $LINUX_ARM64_SHA"
-      
-      - name: Trigger Homebrew tap repository update
-        uses: peter-evans/repository-dispatch@v3
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
         with:
-          token: ${{ secrets.GH_PKG_PAT }}
-          repository: danielmeppiel/homebrew-apm
-          event-type: formula-update
-          client-payload: |
-            {
-              "release": {
-                "version": "${{ github.ref_name }}",
-                "tag": "${{ github.ref_name }}",
-                "repository": "${{ github.repository }}"
-              },
-              "checksums": {
-                "darwin_arm64": "${{ steps.checksums.outputs.darwin-arm64-sha }}",
-                "darwin_x86_64": "${{ steps.checksums.outputs.darwin-x86_64-sha }}",
-                "linux_x86_64": "${{ steps.checksums.outputs.linux-x86_64-sha }}",
-                "linux_arm64": "${{ steps.checksums.outputs.linux-arm64-sha }}"
-              }
-            }
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Push to NuGet.org
+        if: steps.release_type.outputs.is_prerelease == 'false'
+        run: dotnet nuget push ./nupkg/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate

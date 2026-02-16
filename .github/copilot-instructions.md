@@ -1,14 +1,14 @@
-- This project uses uv to manage Python environments and dependencies.
-    - Use `uv sync` to create the virtual environment and install all dependencies automatically.
-    - Use `uv run <command>` to run commands in the uv-managed environment.
-    - For development dependencies, use `uv sync --extra dev`.
-- Unit tests are run with pytest, but remember you must activate the virtual environment first as described above.
+- This project uses .NET 10 and builds with `dotnet` CLI.
+    - Use `dotnet build` to compile the solution.
+    - Use `dotnet test` to run all tests with xUnit.
+    - Use `dotnet run --project src/Apm.Cli` to run the CLI from source.
+- Unit tests use xUnit with FakeItEasy (mocking) and AwesomeAssertions (fluent assertions).
 - **Test coverage principle**: When modifying existing code, add tests for the code paths you touch, on top of tests for the new functionality.
 - **Development Workflow**: To run APM from source while working in other directories:
-    - Install in development mode: `cd /path/to/awd-cli && uv run pip install -e .`
-    - Use absolute path: `/Users/danielmeppiel/Repos/awd-cli/.venv/bin/apm compile --verbose --dry-run`
-    - Or create alias: `alias apm-dev='/Users/danielmeppiel/Repos/awd-cli/.venv/bin/apm'`
-    - Changes to source code are immediately reflected (no reinstall needed)
+    - Build the project: `dotnet build`
+    - Run directly: `dotnet run --project src/Apm.Cli -- compile --verbose --dry-run`
+    - Or install as local tool: `dotnet tool install --global --add-source ./nupkg apm-cli`
+    - Changes to source code require a rebuild (`dotnet build`)
 - The solution must meet the functionality as explained in the [README.md](README.md) file.
 - The general high-level basis to the solution is depicted in [APPROACH.md](../../APPROACH.md). 
 - When developing functionality, we need to respect our own [CONTRIBUTING.md](../../CONTRIBUTING.md) file.

@@ -375,7 +375,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Setup APM
-        run: curl -sSL https://raw.githubusercontent.com/danielmeppiel/apm/main/install.sh | sh
+        run: dotnet tool install -g apm-cli
       - name: Code Review
         run: |
           apm compile
@@ -392,10 +392,11 @@ Containerize APM workflows for consistent environments:
 
 ```dockerfile
 # Dockerfile.apm
-FROM python:3.12-slim
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 
 # Install APM
-RUN curl -sSL https://raw.githubusercontent.com/danielmeppiel/apm/main/install.sh | sh
+RUN dotnet tool install -g apm-cli
+ENV PATH="$PATH:/root/.dotnet/tools"
 
 # Install runtimes
 RUN apm runtime setup copilot
@@ -631,8 +632,8 @@ Run security analysis using: ${input:tools}
 Scope: ${input:scope}
 
 ## Automated Scanning
-1. **Bandit**: Python security linter
-2. **Safety**: Python dependency vulnerability scanner  
+1. **Roslyn Analyzers**: .NET security analyzers
+2. **dotnet-outdated**: .NET dependency vulnerability scanner  
 3. **Semgrep**: Multi-language static analysis
 4. **Custom Rules**: Company-specific security patterns
 

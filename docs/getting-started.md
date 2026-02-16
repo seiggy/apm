@@ -174,109 +174,100 @@ For authentication, see [Token Configuration](#token-configuration-all-optional)
 
 ## Installation
 
-### Quick Install (Recommended)
+### .NET Global Tool (Recommended)
 
-The fastest way to get APM running:
+The fastest way to get APM running (requires [.NET 10 SDK](https://dotnet.microsoft.com/download)):
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/danielmeppiel/apm/main/install.sh | sh
+dotnet tool install -g apm-cli
+```
+
+### PowerShell Installer (Cross-platform, pwsh 7+)
+
+```powershell
+irm https://raw.githubusercontent.com/seiggy/apm-dotnet/main/install.ps1 | iex
 ```
 
 This script automatically:
-- Detects your platform (macOS/Linux, Intel/ARM)
-- Downloads the latest binary
-- Installs to `/usr/local/bin/`
+- Detects your platform (Windows/macOS/Linux, x64/ARM)
+- Downloads the latest NativeAOT binary from GitHub Releases
+- Installs to the appropriate location
 - Verifies installation
-
-### Python Package
-
-If you prefer managing APM through Python:
-
-```bash
-pip install apm-cli
-```
-
-**Note**: This requires Python 3.8+ and may have additional dependencies.
 
 ### Manual Installation
 
-Download the binary for your platform from [GitHub Releases](https://github.com/danielmeppiel/apm/releases/latest):
+Download the NativeAOT binary for your platform from [GitHub Releases](https://github.com/seiggy/apm-dotnet/releases/latest):
+
+#### Windows x64
+```powershell
+# Download and extract
+Invoke-WebRequest -Uri https://github.com/seiggy/apm-dotnet/releases/latest/download/apm-win-x64.zip -OutFile apm-win-x64.zip
+Expand-Archive apm-win-x64.zip -DestinationPath $env:LOCALAPPDATA\apm
+# Add to PATH
+$env:PATH += ";$env:LOCALAPPDATA\apm"
+```
 
 #### macOS Apple Silicon
 ```bash
-curl -L https://github.com/danielmeppiel/apm/releases/latest/download/apm-darwin-arm64.tar.gz | tar -xz
+curl -L https://github.com/seiggy/apm-dotnet/releases/latest/download/apm-osx-arm64.tar.gz | tar -xz
 sudo mkdir -p /usr/local/lib/apm
-sudo cp -r apm-darwin-arm64/* /usr/local/lib/apm/
+sudo cp -r apm-osx-arm64/* /usr/local/lib/apm/
 sudo ln -sf /usr/local/lib/apm/apm /usr/local/bin/apm
 ```
 
 #### macOS Intel
 ```bash
-curl -L https://github.com/danielmeppiel/apm/releases/latest/download/apm-darwin-x86_64.tar.gz | tar -xz
+curl -L https://github.com/seiggy/apm-dotnet/releases/latest/download/apm-osx-x64.tar.gz | tar -xz
 sudo mkdir -p /usr/local/lib/apm
-sudo cp -r apm-darwin-x86_64/* /usr/local/lib/apm/
+sudo cp -r apm-osx-x64/* /usr/local/lib/apm/
 sudo ln -sf /usr/local/lib/apm/apm /usr/local/bin/apm
 ```
 
-#### Linux x86_64
+#### Linux x64
 ```bash
-curl -L https://github.com/danielmeppiel/apm/releases/latest/download/apm-linux-x86_64.tar.gz | tar -xz
+curl -L https://github.com/seiggy/apm-dotnet/releases/latest/download/apm-linux-x64.tar.gz | tar -xz
 sudo mkdir -p /usr/local/lib/apm
-sudo cp -r apm-linux-x86_64/* /usr/local/lib/apm/
+sudo cp -r apm-linux-x64/* /usr/local/lib/apm/
 sudo ln -sf /usr/local/lib/apm/apm /usr/local/bin/apm
 ```
 
 ### From Source (Developers)
 
-For development or customization:
+For development or customization (requires [.NET 10 SDK](https://dotnet.microsoft.com/download)):
 
 ```bash
-git clone https://github.com/danielmeppiel/apm-cli.git
-cd apm-cli
+git clone https://github.com/seiggy/apm-dotnet.git
+cd apm
 
-# Install uv (if not already installed)
-curl -LsSf https://astral.sh/uv/install.sh | sh
-
-# Create virtual environment and install in development mode
-uv venv
-uv pip install -e ".[dev]"
-
-# Activate the environment for development
-source .venv/bin/activate  # On macOS/Linux
-# .venv\Scripts\activate   # On Windows
+# Build and run
+dotnet build
+dotnet run --project src/Apm.Cli
 ```
 
-### Build Binary from Source
+### Build NativeAOT Binary from Source
 
-To build a platform-specific binary using PyInstaller:
+To build a self-contained, single-file NativeAOT binary:
 
 ```bash
-# Clone and setup (if not already done)
-git clone https://github.com/danielmeppiel/apm-cli.git
-cd apm-cli
+# Clone and build
+git clone https://github.com/seiggy/apm-dotnet.git
+cd apm
 
-# Install uv and dependencies
-curl -LsSf https://astral.sh/uv/install.sh | sh
-uv venv
-uv pip install -e ".[dev]"
-uv pip install pyinstaller
-
-# Activate environment
-source .venv/bin/activate
-
-# Build binary for your platform
-chmod +x scripts/build-binary.sh
-./scripts/build-binary.sh
+# Publish NativeAOT for your platform
+dotnet publish src/Apm.Cli -c Release -r win-x64 -p:NativeAot=true
+# Or for Linux/macOS:
+# dotnet publish src/Apm.Cli -c Release -r linux-x64 -p:NativeAot=true
+# dotnet publish src/Apm.Cli -c Release -r osx-arm64 -p:NativeAot=true
 ```
 
-This creates a platform-specific binary at `./dist/apm-{platform}-{arch}/apm` that can be distributed without Python dependencies.
+Supported RIDs: `win-x64`, `linux-x64`, `linux-arm64`, `osx-x64`, `osx-arm64`.
 
 **Build features**:
-- **Cross-platform**: Automatically detects macOS/Linux and Intel/ARM architectures
-- **UPX compression**: Automatically compresses binary if UPX is available (`brew install upx`)
-- **Self-contained**: Binary includes all Python dependencies
-- **Fast startup**: Uses `--onedir` mode for optimal CLI performance
-- **Verification**: Automatically tests the built binary and generates checksums
+- **NativeAOT**: Ahead-of-time compiled — no .NET runtime required on target machine
+- **Cross-platform**: Build for any supported runtime identifier
+- **Self-contained**: Single binary with no external dependencies
+- **Fast startup**: NativeAOT provides near-instant startup time
+- **Small footprint**: Trimmed and stripped for minimal binary size
 
 ## Setup AI Runtime
 
@@ -625,16 +616,17 @@ curl -H "Authorization: token $GITHUB_CLI_PAT" https://api.github.com/user
 
 **Problem**: `apm: command not found`
 **Solution**:
-1. Check if `/usr/local/bin` is in your PATH
-2. Try `which apm` to locate the binary
-3. Reinstall using the quick install script
+1. If installed via `dotnet tool`: ensure `~/.dotnet/tools` is in your PATH
+2. If installed via NativeAOT binary: check the install location is in your PATH
+3. Try `where apm` (Windows) or `which apm` (macOS/Linux)
+4. Reinstall: `dotnet tool install -g apm-cli`
 
 ### Permission Denied
 
 **Problem**: Permission errors during installation
 **Solution**:
-1. Use `sudo` for system-wide installation
-2. Or install to user directory: `~/bin/`
+1. `dotnet tool install -g` installs to user directory (no sudo needed)
+2. For NativeAOT binary: use `sudo` on Linux/macOS for system-wide install, or install to user directory
 
 ## Next Steps
 

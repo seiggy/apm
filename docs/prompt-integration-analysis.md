@@ -1,5 +1,7 @@
 # APM Prompt Integration Analysis
 
+> **Note:** This document analyzes the prompt integration design from the original Python implementation. Code examples and file paths reference the Python codebase for historical context. The .NET port in `src/Apm.Cli/Integration/` implements the equivalent functionality in C#.
+
 **Date:** November 16, 2025  
 **Component:** VSCode/GitHub Prompt Integration  
 **Status:** Partial Implementation with Critical Gaps

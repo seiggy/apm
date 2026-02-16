@@ -313,7 +313,7 @@ description: Project overview and architecture
 Command-line tool for AI-powered development workflows.
 
 ## Key Technologies
-- Python 3.9+ with Click framework
+- .NET 10+ with Spectre.Console framework
 - YAML frontmatter for configuration
 - Rich library for terminal output
 
