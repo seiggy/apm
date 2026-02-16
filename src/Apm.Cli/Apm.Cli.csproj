@@ -36,7 +36,6 @@
     <PackageReference Include="LibGit2Sharp" />
     <PackageReference Include="Spectre.Console" />
     <PackageReference Include="System.CommandLine" />
-    <PackageReference Include="Tomlyn" />
     <PackageReference Include="Vecc.YamlDotNet.Analyzers.StaticGenerator" />
     <PackageReference Include="YamlDotNet" />
   </ItemGroup>

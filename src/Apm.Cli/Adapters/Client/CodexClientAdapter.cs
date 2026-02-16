@@ -3,8 +3,6 @@ using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 using Apm.Cli.Registry;
 using Apm.Cli.Utils;
-using Tomlyn;
-using Tomlyn.Model;
 
 namespace Apm.Cli.Adapters.Client;
 
@@ -48,8 +46,7 @@ public class CodexClientAdapter : IClientAdapter
 
         try
         {
-            var tomlModel = DictionaryToTomlTable(current);
-            var tomlText = Toml.FromModel(tomlModel);
+            var tomlText = SimpleToml.Serialize(current);
             File.WriteAllText(configPath, tomlText);
             return true;
         }
@@ -69,8 +66,7 @@ public class CodexClientAdapter : IClientAdapter
         try
         {
             var text = File.ReadAllText(configPath);
-            var model = Toml.ToModel(text);
-            return TomlTableToDictionary(model);
+            return SimpleToml.Parse(text);
         }
         catch
         {
@@ -410,42 +406,4 @@ public class CodexClientAdapter : IClientAdapter
         return result;
     }
 
-    private static Dictionary<string, object?> TomlTableToDictionary(TomlTable table)
-    {
-        var dict = new Dictionary<string, object?>();
-        foreach (var kvp in table)
-        {
-            if (kvp.Value is TomlTable nested)
-                dict[kvp.Key] = TomlTableToDictionary(nested);
-            else
-                dict[kvp.Key] = kvp.Value;
-        }
-        return dict;
-    }
-
-    private static TomlTable DictionaryToTomlTable(Dictionary<string, object?> dict)
-    {
-        var table = new TomlTable();
-        foreach (var kvp in dict)
-        {
-            if (kvp.Value is Dictionary<string, object?> nested)
-                table[kvp.Key] = DictionaryToTomlTable(nested);
-            else if (kvp.Value is List<object?> list)
-                table[kvp.Key] = ListToTomlArray(list);
-            else if (kvp.Value is not null)
-                table[kvp.Key] = kvp.Value;
-        }
-        return table;
-    }
-
-    private static TomlArray ListToTomlArray(List<object?> list)
-    {
-        var arr = new TomlArray();
-        foreach (var item in list)
-        {
-            if (item is not null)
-                arr.Add(item);
-        }
-        return arr;
-    }
 }

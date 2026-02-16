@@ -1,4 +1,5 @@
 using Apm.Cli.Adapters.Client;
+using Apm.Cli.Utils;
 using AwesomeAssertions;
 
 namespace Apm.Cli.Tests.Adapters;
@@ -89,11 +90,7 @@ public class CodexClientAdapterTests : IDisposable
             try
             {
                 var text = File.ReadAllText(path);
-                var model = Tomlyn.Toml.ToModel(text);
-                var dict = new Dictionary<string, object?>();
-                foreach (var kvp in model)
-                    dict[kvp.Key] = kvp.Value;
-                return dict;
+                return SimpleToml.Parse(text);
             }
             catch
             {
