@@ -10,7 +10,7 @@ public static class DepsTreeCommand
 {
     public static Command Create()
     {
-        var command = new Command("tree", "🌳 Show dependency tree");
+        var command = new Command("tree", Emoji.Replace(":deciduous_tree: Show dependency tree"));
         command.SetHandler(ctx =>
         {
             ctx.ExitCode = Execute();

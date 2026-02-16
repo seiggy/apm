@@ -31,7 +31,7 @@ public class VSCodeClientAdapter : IClientAdapter
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Warning: Could not create .vscode directory: {ex.Message}");
+            ConsoleHelpers.Warning($"Warning: Could not create .vscode directory: {ex.Message}");
         }
 
         return Path.Combine(vscodeDir, "mcp.json");
@@ -48,7 +48,7 @@ public class VSCodeClientAdapter : IClientAdapter
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error updating VSCode MCP configuration: {ex.Message}");
+            ConsoleHelpers.Error($"Error updating VSCode MCP configuration: {ex.Message}");
             return false;
         }
     }
@@ -72,7 +72,7 @@ public class VSCodeClientAdapter : IClientAdapter
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error reading VSCode MCP configuration: {ex.Message}");
+            ConsoleHelpers.Error($"Error reading VSCode MCP configuration: {ex.Message}");
             return new Dictionary<string, object?>();
         }
     }
@@ -87,7 +87,7 @@ public class VSCodeClientAdapter : IClientAdapter
     {
         if (string.IsNullOrWhiteSpace(serverUrl))
         {
-            Console.WriteLine("Error: serverUrl cannot be empty");
+            ConsoleHelpers.Error("Error: serverUrl cannot be empty");
             return false;
         }
 
@@ -106,7 +106,7 @@ public class VSCodeClientAdapter : IClientAdapter
 
             if (serverConfig.Count == 0)
             {
-                Console.WriteLine($"Unable to configure server: {serverUrl}");
+                ConsoleHelpers.Error($"Unable to configure server: {serverUrl}");
                 return false;
             }
 
@@ -156,7 +156,7 @@ public class VSCodeClientAdapter : IClientAdapter
             }
 
             File.WriteAllText(configPath, root.ToJsonString(WriteOptions));
-            Console.WriteLine($"Successfully configured MCP server '{configKey}' for VS Code");
+            ConsoleHelpers.Success($"Successfully configured MCP server '{configKey}' for VS Code");
             return true;
         }
         catch (ArgumentException)
@@ -165,7 +165,7 @@ public class VSCodeClientAdapter : IClientAdapter
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error configuring MCP server: {ex.Message}");
+            ConsoleHelpers.Error($"Error configuring MCP server: {ex.Message}");
             return false;
         }
     }

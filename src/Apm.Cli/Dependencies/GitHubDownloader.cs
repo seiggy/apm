@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using Spectre.Console;
 using Apm.Cli.Core;
 using Apm.Cli.Models;
 using Apm.Cli.Utils;
@@ -56,7 +57,7 @@ public class GitHubPackageDownloader : IPackageDownloader
     private static void Debug(string message)
     {
         if (Environment.GetEnvironmentVariable("APM_DEBUG") != null)
-            Console.Error.WriteLine($"[DEBUG] {message}");
+            AnsiConsole.MarkupLine($"[dim][[DEBUG]] {Markup.Escape(message)}[/]");
     }
 
     /// <summary>Sanitize Git error messages to remove sensitive auth information.</summary>

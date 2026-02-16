@@ -14,7 +14,7 @@ public static class Verifier
         {
             if (!File.Exists(configFile))
             {
-                Console.Error.WriteLine($"Configuration file {configFile} not found.");
+                ConsoleHelpers.Error($"Configuration file {configFile} not found.");
                 return null;
             }
 
@@ -23,7 +23,7 @@ public static class Verifier
         }
         catch (Exception e)
         {
-            Console.Error.WriteLine($"Error loading {configFile}: {e.Message}");
+            ConsoleHelpers.Error($"Error loading {configFile}: {e.Message}");
             return null;
         }
     }
@@ -52,7 +52,7 @@ public static class Verifier
         }
         catch (Exception e)
         {
-            Console.Error.WriteLine($"Error reading {configFile}: {e.Message}");
+            ConsoleHelpers.Error($"Error reading {configFile}: {e.Message}");
             return (false, [], []);
         }
 

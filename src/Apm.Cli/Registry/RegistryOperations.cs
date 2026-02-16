@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Spectre.Console;
 using Apm.Cli.Adapters.Client;
 using Apm.Cli.Core;
 
@@ -286,12 +287,12 @@ public class McpServerOperations : IDisposable
                 }
             }
 
-            Console.WriteLine(isE2e ? "E2E test mode detected" : "CI environment detected");
+            AnsiConsole.MarkupLine(isE2e ? "E2E test mode detected" : "CI environment detected");
             return envVars;
         }
 
         // Interactive prompt
-        Console.WriteLine("Environment variables needed:");
+        AnsiConsole.MarkupLine("Environment variables needed:");
         foreach (var varName in requiredVars.Keys.Order())
         {
             var varInfo = requiredVars[varName];
@@ -300,7 +301,7 @@ public class McpServerOperations : IDisposable
             var existing = Environment.GetEnvironmentVariable(varName);
             if (!string.IsNullOrEmpty(existing))
             {
-                Console.WriteLine($"  ✅ {varName}: using existing value");
+                AnsiConsole.MarkupLine($"  :check_mark_button: {Markup.Escape(varName)}: using existing value");
                 envVars[varName] = existing;
             }
             else
@@ -309,11 +310,11 @@ public class McpServerOperations : IDisposable
                 if (!string.IsNullOrEmpty(description))
                     prompt += $" ({description})";
 
-                Console.Write($"{prompt}: ");
+                AnsiConsole.Markup($"{Markup.Escape(prompt)}: ");
                 envVars[varName] = Console.ReadLine() ?? "";
             }
         }
-        Console.WriteLine();
+        AnsiConsole.WriteLine();
 
         return envVars;
     }

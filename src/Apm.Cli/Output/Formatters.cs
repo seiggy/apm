@@ -270,7 +270,7 @@ public class CompilationFormatter
                 PlacementStrategy.Distributed => "Distributed",
                 _ => "Unknown"
             };
-            var coverage = decision.DistributionScore < 0.7 ? "✅ Verified" : "⚠️ Root Fallback";
+            var coverage = decision.DistributionScore < 0.7 ? Emoji.Replace(":check_mark_button: Verified") : Emoji.Replace(":warning: Root Fallback");
             lines.Add($"  {pattern,-30} {score,-8} {strategy,-15} {coverage}");
         }
 
@@ -291,34 +291,34 @@ public class CompilationFormatter
 
         if (efficiency < 30)
         {
-            lines.Add("⚠️  Low Efficiency Detected:");
-            lines.Add("   • Coverage guarantee requires some instructions at root level");
-            lines.Add("   • This creates pollution for specialized directories");
-            lines.Add("   • Trade-off: Guaranteed coverage vs. optimal efficiency");
-            lines.Add("   • Alternative: Higher efficiency with coverage violations (data loss)");
+            lines.Add(Emoji.Replace(":warning: Low Efficiency Detected:"));
+            lines.Add("   - Coverage guarantee requires some instructions at root level");
+            lines.Add("   - This creates pollution for specialized directories");
+            lines.Add("   - Trade-off: Guaranteed coverage vs. optimal efficiency");
+            lines.Add("   - Alternative: Higher efficiency with coverage violations (data loss)");
             lines.Add("");
-            lines.Add("💡 This may be mathematically optimal given coverage constraints");
+            lines.Add(Emoji.Replace(":light_bulb: This may be mathematically optimal given coverage constraints"));
         }
         else if (efficiency < 60)
         {
-            lines.Add("✅ Moderate Efficiency:");
-            lines.Add("   • Good balance between coverage and efficiency");
-            lines.Add("   • Some coverage-driven pollution is acceptable");
-            lines.Add("   • Most patterns are well-localized");
+            lines.Add(Emoji.Replace(":check_mark_button: Moderate Efficiency:"));
+            lines.Add("   - Good balance between coverage and efficiency");
+            lines.Add("   - Some coverage-driven pollution is acceptable");
+            lines.Add("   - Most patterns are well-localized");
         }
         else
         {
-            lines.Add("🎯 High Efficiency:");
-            lines.Add("   • Excellent pattern locality achieved");
-            lines.Add("   • Minimal coverage conflicts");
-            lines.Add("   • Instructions are optimally placed");
+            lines.Add(Emoji.Replace(":direct_hit: High Efficiency:"));
+            lines.Add("   - Excellent pattern locality achieved");
+            lines.Add("   - Minimal coverage conflicts");
+            lines.Add("   - Instructions are optimally placed");
         }
 
         lines.Add("");
-        lines.Add("📚 Why Coverage Takes Priority:");
-        lines.Add("   • Every file must access applicable instructions");
-        lines.Add("   • Hierarchical inheritance prevents data loss");
-        lines.Add("   • Better low efficiency than missing instructions");
+        lines.Add(Emoji.Replace(":books: Why Coverage Takes Priority:"));
+lines.Add("   - Every file must access applicable instructions");
+            lines.Add("   - Hierarchical inheritance prevents data loss");
+            lines.Add("   - Better low efficiency than missing instructions");
 
         return lines;
     }
@@ -358,14 +358,14 @@ public class CompilationFormatter
         var lines = new List<string>();
 
         foreach (var error in errors)
-            lines.Add(Styled($"✗ Error: {error}", "red"));
+            lines.Add(Styled(Emoji.Replace($":cross_mark: Error: {error}"), "red"));
 
         foreach (var warning in warnings)
         {
             if (warning.Contains('\n'))
             {
                 var warningLines = warning.Split('\n');
-                lines.Add(Styled($"⚠ Warning: {warningLines[0]}", "yellow"));
+                lines.Add(Styled(Emoji.Replace($":warning: Warning: {warningLines[0]}"), "yellow"));
                 foreach (var line in warningLines.Skip(1))
                 {
                     if (!string.IsNullOrWhiteSpace(line))
@@ -374,7 +374,7 @@ public class CompilationFormatter
             }
             else
             {
-                lines.Add(Styled($"⚠ Warning: {warning}", "yellow"));
+                lines.Add(Styled(Emoji.Replace($":warning: Warning: {warning}"), "yellow"));
             }
         }
 

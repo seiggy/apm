@@ -1,3 +1,5 @@
+using Apm.Cli.Utils;
+
 namespace Apm.Cli.Core;
 
 /// <summary>
@@ -57,7 +59,7 @@ public static class Operations
         }
         catch (Exception e)
         {
-            Console.Error.WriteLine($"Error installing package {packageName}: {e.Message}");
+            ConsoleHelpers.Error($"Error installing package {packageName}: {e.Message}");
             return new InstallResult
             {
                 Success = false,
@@ -80,7 +82,7 @@ public static class Operations
         }
         catch (Exception e)
         {
-            Console.Error.WriteLine($"Error uninstalling package: {e.Message}");
+            ConsoleHelpers.Error($"Error uninstalling package: {e.Message}");
             return false;
         }
     }
@@ -98,7 +100,7 @@ public static class Operations
         }
         catch (Exception e)
         {
-            Console.Error.WriteLine($"Error configuring client: {e.Message}");
+            ConsoleHelpers.Error($"Error configuring client: {e.Message}");
             return false;
         }
     }

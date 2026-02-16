@@ -70,9 +70,9 @@ public static class GitHubHost
         msg += $"Unsupported Git host: '{hostname}'.\n";
         msg += "\n";
         msg += "APM only allows these Git hosts by default:\n";
-        msg += "  • github.com\n";
-        msg += "  • *.ghe.com (GitHub Enterprise Cloud)\n";
-        msg += "  • dev.azure.com, *.visualstudio.com (Azure DevOps)\n";
+        msg += "  - github.com\n";
+        msg += "  - *.ghe.com (GitHub Enterprise Cloud)\n";
+        msg += "  - dev.azure.com, *.visualstudio.com (Azure DevOps)\n";
         msg += "\n";
 
         if (!string.IsNullOrEmpty(currentHost))

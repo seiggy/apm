@@ -1,3 +1,4 @@
+using Spectre.Console;
 using Apm.Cli.Output;
 using Apm.Cli.Primitives;
 using Apm.Cli.Utils;
@@ -429,11 +430,11 @@ public class DistributedCompiler : IDistributedCompiler
 
         var fileList = orphanedFiles
             .Take(5)
-            .Select(f => $"  • {Path.GetRelativePath(_baseDir, f)}")
+            .Select(f => $"  - {Path.GetRelativePath(_baseDir, f)}")
             .ToList();
 
         if (orphanedFiles.Count > 5)
-            fileList.Add($"  • ...and {orphanedFiles.Count - 5} more");
+            fileList.Add($"  - ...and {orphanedFiles.Count - 5} more");
 
         var text = string.Join("\n", fileList);
         return [$"Found {orphanedFiles.Count} orphaned AGENTS.md files:\n{text}\n  Run 'apm compile --clean' to remove orphaned files"];
@@ -441,18 +442,18 @@ public class DistributedCompiler : IDistributedCompiler
 
     private static List<string> CleanupOrphanedFiles(List<string> orphanedFiles)
     {
-        var messages = new List<string> { $"🧹 Cleaning up {orphanedFiles.Count} orphaned AGENTS.md files" };
+        var messages = new List<string> { Emoji.Replace($":broom: Cleaning up {orphanedFiles.Count} orphaned AGENTS.md files") };
 
         foreach (var filePath in orphanedFiles)
         {
             try
             {
                 File.Delete(filePath);
-                messages.Add($"  ✓ Removed {Path.GetFileName(filePath)}");
+                messages.Add(Emoji.Replace($"  :check_mark: Removed {Path.GetFileName(filePath)}"));
             }
             catch (Exception e)
             {
-                messages.Add($"  ✗ Failed to remove {Path.GetFileName(filePath)}: {e.Message}");
+                messages.Add(Emoji.Replace($"  :cross_mark: Failed to remove {Path.GetFileName(filePath)}: {e.Message}"));
             }
         }
 

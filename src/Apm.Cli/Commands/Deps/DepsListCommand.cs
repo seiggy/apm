@@ -10,7 +10,7 @@ public static class DepsListCommand
 {
     public static Command Create()
     {
-        var command = new Command("list", "📋 List installed APM dependencies");
+        var command = new Command("list", Emoji.Replace(":clipboard: List installed APM dependencies"));
         command.SetHandler(ctx =>
         {
             ctx.ExitCode = Execute();
@@ -77,7 +77,7 @@ public static class DepsListCommand
 
             // Display packages in table format
             var table = new Table()
-                .Title("📋 APM Dependencies")
+                .Title(":clipboard: APM Dependencies")
                 .Border(TableBorder.Rounded);
             table.AddColumn(new TableColumn("[bold cyan]Package[/]").NoWrap());
             table.AddColumn(new TableColumn("[bold cyan]Version[/]"));
@@ -102,7 +102,7 @@ public static class DepsListCommand
                 AnsiConsole.WriteLine();
                 ConsoleHelpers.Warning($"{orphanedPackages.Count} orphaned package(s) found (not in apm.yml)");
                 foreach (var pkg in orphanedPackages)
-                    AnsiConsole.MarkupLine($"[dim yellow]  • {Markup.Escape(pkg)}[/]");
+                    AnsiConsole.MarkupLine($"[dim yellow]  - {Markup.Escape(pkg)}[/]");
                 AnsiConsole.WriteLine();
                 ConsoleHelpers.Info("Run 'apm prune' to remove orphaned packages", symbol: "bulb");
             }
@@ -189,7 +189,7 @@ public static class DepsListCommand
         }
         catch (Exception e)
         {
-            AnsiConsole.MarkupLine($"[yellow]⚠️ Warning: Failed to read package {Markup.Escape(orgRepoName)}: {Markup.Escape(e.Message)}[/]");
+            AnsiConsole.MarkupLine($":warning: [yellow]Warning: Failed to read package {Markup.Escape(orgRepoName)}: {Markup.Escape(e.Message)}[/]");
         }
     }
 

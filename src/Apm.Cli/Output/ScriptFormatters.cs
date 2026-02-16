@@ -1,3 +1,5 @@
+using Spectre.Console;
+
 namespace Apm.Cli.Output;
 
 /// <summary>Professional formatter for script execution output following CLI UX design plan.</summary>
@@ -13,7 +15,7 @@ public class ScriptExecutionFormatter
     /// <summary>Format the script execution header with parameters.</summary>
     public List<string> FormatScriptHeader(string scriptName, Dictionary<string, string> parameters)
     {
-        var lines = new List<string> { $"🚀 Running script: {scriptName}" };
+        var lines = new List<string> { Emoji.Replace($":rocket: Running script: {scriptName}") };
 
         foreach (var (name, value) in parameters)
             lines.Add($"  - {name}: {value}");
@@ -85,7 +87,7 @@ public class ScriptExecutionFormatter
     /// <summary>Format successful execution result.</summary>
     public List<string> FormatExecutionSuccess(string runtime, double? executionTime = null)
     {
-        var msg = $"✅ {Capitalize(runtime)} execution completed successfully";
+        var msg = Emoji.Replace($":check_mark_button: {Capitalize(runtime)} execution completed successfully");
         if (executionTime.HasValue)
             msg += $" ({executionTime.Value:F2}s)";
         return [msg];
@@ -94,7 +96,7 @@ public class ScriptExecutionFormatter
     /// <summary>Format execution error result.</summary>
     public List<string> FormatExecutionError(string runtime, int errorCode, string? errorMsg = null)
     {
-        var lines = new List<string> { $"✗ {Capitalize(runtime)} execution failed (exit code: {errorCode})" };
+        var lines = new List<string> { Emoji.Replace($":cross_mark: {Capitalize(runtime)} execution failed (exit code: {errorCode})") };
 
         if (!string.IsNullOrEmpty(errorMsg))
         {
@@ -122,7 +124,7 @@ public class ScriptExecutionFormatter
 
     /// <summary>Format message for auto-discovered prompts.</summary>
     public string FormatAutoDiscoveryMessage(string scriptName, string promptFile, string runtime)
-        => $"ℹ Auto-discovered: {promptFile} (runtime: {runtime})";
+        => Emoji.Replace($":information: Auto-discovered: {promptFile} (runtime: {runtime})");
 
     private static string Capitalize(string s)
         => string.IsNullOrEmpty(s) ? s : char.ToUpper(s[0]) + s[1..];

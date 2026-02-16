@@ -1,6 +1,7 @@
 using Apm.Cli.Adapters.Client;
 using Apm.Cli.Registry;
 using Apm.Cli.Utils;
+using Spectre.Console;
 
 namespace Apm.Cli.Core;
 
@@ -27,13 +28,13 @@ public sealed class InstallationSummary
     public void LogSummary()
     {
         if (Installed.Count > 0)
-            ConsoleHelpers.Success($"✅ Installed: {string.Join(", ", Installed)}");
+            ConsoleHelpers.Success($"Installed: {string.Join(", ", Installed)}", symbol: "check");
 
         foreach (var item in Skipped)
-            ConsoleHelpers.Warning($"⚠️  Skipped {item.Server}: {item.Reason}");
+            ConsoleHelpers.Warning($"Skipped {item.Server}: {item.Reason}", symbol: "warning");
 
         foreach (var item in Failed)
-            ConsoleHelpers.Error($"❌ Failed {item.Server}: {item.Reason}");
+            ConsoleHelpers.Error($"Failed {item.Server}: {item.Reason}", symbol: "error");
     }
 
     public sealed record SkippedItem(string Server, string Reason);
@@ -96,18 +97,18 @@ public sealed class SafeInstaller
                 if (result)
                 {
                     summary.AddInstalled(serverRef);
-                    ConsoleHelpers.Success($"  ✓ {serverRef}");
+                    AnsiConsole.MarkupLine($"  :check_mark: [bold green]{Markup.Escape(serverRef)}[/]");
                 }
                 else
                 {
                     summary.AddFailed(serverRef, "configuration failed");
-                    ConsoleHelpers.Warning($"  ✗ {serverRef} installation failed");
+                    AnsiConsole.MarkupLine($"  :cross_mark: [yellow]{Markup.Escape(serverRef)} installation failed[/]");
                 }
             }
             catch (Exception e)
             {
                 summary.AddFailed(serverRef, e.Message);
-                ConsoleHelpers.Error($"  ✗ {serverRef}: {e.Message}");
+                AnsiConsole.MarkupLine($"  :cross_mark: [red]{Markup.Escape(serverRef)}: {Markup.Escape(e.Message)}[/]");
             }
         }
 

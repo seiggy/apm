@@ -1,6 +1,7 @@
 using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.Text.Json.Nodes;
+using Spectre.Console;
 using Apm.Cli.Core;
 using Apm.Cli.Utils;
 
@@ -13,7 +14,7 @@ public static class ConfigSetCommand
         var keyArg = new Argument<string>("key", "Configuration key to set");
         var valueArg = new Argument<string>("value", "Value to set");
 
-        var command = new Command("set", "✏️  Set configuration value");
+        var command = new Command("set", Emoji.Replace(":pencil: Set configuration value"));
         command.AddArgument(keyArg);
         command.AddArgument(valueArg);
         command.SetHandler(ctx =>

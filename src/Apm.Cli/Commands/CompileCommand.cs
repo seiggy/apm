@@ -15,23 +15,23 @@ public static class CompileCommand
 {
     public static Command Create()
     {
-        var targetOpt = new Option<string?>(["--target", "-t"], "🎯 Target platform: vscode, agents, claude, or all (auto-detects if omitted)");
+        var targetOpt = new Option<string?>(["--target", "-t"], Emoji.Replace(":direct_hit: Target platform: vscode, agents, claude, or all (auto-detects if omitted)"));
         var strategyOpt = new Option<string?>("--strategy", "Compilation strategy: distributed or single-file");
-        var singleAgentsOpt = new Option<bool>("--single-agents", "📄 Force single-file compilation (legacy mode)");
-        var dryRunOpt = new Option<bool>("--dry-run", "🔍 Preview compilation without writing files");
-        var verboseOpt = new Option<bool>(["--verbose", "-v"], "🔍 Show detailed source attribution and optimizer analysis");
+        var singleAgentsOpt = new Option<bool>("--single-agents", Emoji.Replace(":page_facing_up: Force single-file compilation (legacy mode)"));
+        var dryRunOpt = new Option<bool>("--dry-run", Emoji.Replace(":magnifying_glass_tilted_left: Preview compilation without writing files"));
+        var verboseOpt = new Option<bool>(["--verbose", "-v"], Emoji.Replace(":magnifying_glass_tilted_left: Show detailed source attribution and optimizer analysis"));
         var traceOpt = new Option<bool>("--trace", "Show source attribution");
-        var localOnlyOpt = new Option<bool>("--local-only", "🏠 Ignore dependencies, compile only local primitives");
+        var localOnlyOpt = new Option<bool>("--local-only", Emoji.Replace(":house: Ignore dependencies, compile only local primitives"));
         var debugOpt = new Option<bool>("--debug", "Show optimizer metrics");
         var noConstitutionOpt = new Option<bool>("--no-constitution", "Skip constitution block");
         var chatmodeOpt = new Option<string?>("--chatmode", "Target specific chatmode");
-        var cleanOpt = new Option<bool>("--clean", "🧹 Remove orphaned AGENTS.md files that are no longer generated");
+        var cleanOpt = new Option<bool>("--clean", Emoji.Replace(":broom: Remove orphaned AGENTS.md files that are no longer generated"));
         var excludeOpt = new Option<string[]>("--exclude", "Glob patterns to exclude from compilation") { AllowMultipleArgumentsPerToken = true };
         var watchOpt = new Option<bool>("--watch", "Watch for changes and recompile");
         var noLinksOpt = new Option<bool>("--no-links", "Skip markdown link resolution");
         var validateOpt = new Option<bool>("--validate", "Validate primitives without compiling");
 
-        var command = new Command("compile", "🚀 Compile APM context into distributed AGENTS.md files");
+        var command = new Command("compile", Emoji.Replace(":rocket: Compile APM context into distributed AGENTS.md files"));
         command.AddOption(targetOpt);
         command.AddOption(strategyOpt);
         command.AddOption(singleAgentsOpt);
@@ -97,8 +97,8 @@ public static class CompileCommand
         {
             if (!File.Exists("apm.yml"))
             {
-                ConsoleHelpers.Error("❌ Not an APM project - no apm.yml found");
-                ConsoleHelpers.Info("💡 To initialize an APM project, run:");
+                ConsoleHelpers.Error("Not an APM project - no apm.yml found", symbol: "error");
+                ConsoleHelpers.Info("To initialize an APM project, run:", symbol: "info");
                 ConsoleHelpers.Info("   apm init");
                 return 1;
             }
@@ -120,15 +120,15 @@ public static class CompileCommand
 
                 if (hasEmptyApm)
                 {
-                    ConsoleHelpers.Error("❌ No instruction files found in .apm/ directory");
-                    ConsoleHelpers.Info("💡 To add instructions, create files like:");
+                    ConsoleHelpers.Error("No instruction files found in .apm/ directory", symbol: "error");
+                    ConsoleHelpers.Info("To add instructions, create files like:", symbol: "info");
                     ConsoleHelpers.Info("   .apm/instructions/coding-standards.instructions.md");
                     ConsoleHelpers.Info("   .apm/chatmodes/backend-engineer.chatmode.md");
                 }
                 else
                 {
-                    ConsoleHelpers.Error("❌ No APM content found to compile");
-                    ConsoleHelpers.Info("💡 To get started:");
+                    ConsoleHelpers.Error("No APM content found to compile", symbol: "error");
+                    ConsoleHelpers.Info("To get started:", symbol: "info");
                     ConsoleHelpers.Info("   1. Install APM dependencies: apm install <owner>/<repo>");
                     ConsoleHelpers.Info("   2. Or create local instructions: mkdir -p .apm/instructions");
                     ConsoleHelpers.Info("   3. Then create .instructions.md or .chatmode.md files");
@@ -193,7 +193,7 @@ public static class CompileCommand
                 if (detectedTarget == "minimal")
                 {
                     ConsoleHelpers.Info($"Compiling for AGENTS.md only ({detectionReason})");
-                    ConsoleHelpers.Info("💡 Create .github/ or .claude/ folder for full integration", symbol: "bulb");
+                    ConsoleHelpers.Info("Create .github/ or .claude/ folder for full integration", symbol: "bulb");
                 }
                 else if (detectedTarget is "vscode" or "agents")
                     ConsoleHelpers.Info($"Compiling for AGENTS.md (VSCode/Copilot) - {detectionReason}");
@@ -236,7 +236,7 @@ public static class CompileCommand
                 {
                     ConsoleHelpers.Warning($"Compilation completed with {result.Warnings.Count} warnings:");
                     foreach (var warning in result.Warnings)
-                        AnsiConsole.MarkupLine($"  [yellow]⚠️  {Markup.Escape(warning)}[/]");
+                        AnsiConsole.MarkupLine($"  :warning: [yellow]{Markup.Escape(warning)}[/]");
                 }
             }
 
@@ -244,7 +244,7 @@ public static class CompileCommand
             {
                 ConsoleHelpers.Error($"Compilation failed with {result.Errors.Count} errors:");
                 foreach (var error in result.Errors)
-                    AnsiConsole.MarkupLine($"  [red]❌ {Markup.Escape(error)}[/]");
+                    AnsiConsole.MarkupLine($"  :cross_mark: [red]{Markup.Escape(error)}[/]");
                 return 1;
             }
 
@@ -281,9 +281,9 @@ public static class CompileCommand
 
         ConsoleHelpers.Success("All primitives validated successfully!", symbol: "sparkles");
         ConsoleHelpers.Info($"Validated {primitives.Count()} primitives:");
-        ConsoleHelpers.Info($"  • {primitives.Chatmodes.Count} chatmodes");
-        ConsoleHelpers.Info($"  • {primitives.Instructions.Count} instructions");
-        ConsoleHelpers.Info($"  • {primitives.Contexts.Count} contexts");
+        ConsoleHelpers.Info($"  - {primitives.Chatmodes.Count} chatmodes");
+        ConsoleHelpers.Info($"  - {primitives.Instructions.Count} instructions");
+        ConsoleHelpers.Info($"  - {primitives.Contexts.Count} contexts");
         return 0;
     }
 
@@ -351,9 +351,9 @@ public static class CompileCommand
         table.AddColumn(new TableColumn("[white]Details[/]"));
 
         table.AddRow("Spec-kit Constitution", Markup.Escape(cStatus), Markup.Escape($"Hash: {cHash ?? "-"}"));
-        table.AddRow("Instructions", stats.GetValueOrDefault("instructions", 0).ToString()!, "✅ All validated");
-        table.AddRow("Contexts", stats.GetValueOrDefault("contexts", 0).ToString()!, "✅ All validated");
-        table.AddRow("Chatmodes", stats.GetValueOrDefault("chatmodes", 0).ToString()!, "✅ All validated");
+        table.AddRow("Instructions", stats.GetValueOrDefault("instructions", 0).ToString()!, ":check_mark_button: All validated");
+        table.AddRow("Contexts", stats.GetValueOrDefault("contexts", 0).ToString()!, ":check_mark_button: All validated");
+        table.AddRow("Chatmodes", stats.GetValueOrDefault("chatmodes", 0).ToString()!, ":check_mark_button: All validated");
 
         string outputDetails;
         try
@@ -366,7 +366,7 @@ public static class CompileCommand
         {
             outputDetails = Path.GetFileName(outputPath);
         }
-        table.AddRow("Output", "✨ SUCCESS", Markup.Escape(outputDetails));
+        table.AddRow("Output", ":sparkles: SUCCESS", Markup.Escape(outputDetails));
         AnsiConsole.Write(table);
 
         if (settings.DryRun)
@@ -374,7 +374,7 @@ public static class CompileCommand
             var preview = finalContent.Length > 500
                 ? finalContent[..500] + "..."
                 : finalContent;
-            ConsoleHelpers.Panel(preview, title: "📋 Generated Content Preview", borderStyle: "cyan");
+            ConsoleHelpers.Panel(preview, title: ":clipboard: Generated Content Preview", borderStyle: "cyan");
         }
         else
         {
@@ -385,8 +385,8 @@ public static class CompileCommand
                 "Execute agentic workflows: apm run <script> --param key=value",
             };
             ConsoleHelpers.Panel(
-                string.Join("\n", nextSteps.Select(s => $"• {s}")),
-                title: "💡 Next Steps",
+                string.Join("\n", nextSteps.Select(s => $"- {s}")),
+                title: ":light_bulb: Next Steps",
                 borderStyle: "blue");
         }
     }
@@ -476,7 +476,7 @@ public static class CompileCommand
                 {
                     ConsoleHelpers.Error("Recompilation failed");
                     foreach (var error in result.Errors)
-                        AnsiConsole.MarkupLine($"  [red]❌ {Markup.Escape(error)}[/]");
+                        AnsiConsole.MarkupLine($"  :cross_mark: [red]{Markup.Escape(error)}[/]");
                 }
             }
             catch (Exception ex)

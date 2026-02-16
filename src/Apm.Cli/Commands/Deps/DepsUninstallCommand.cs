@@ -16,7 +16,7 @@ public static class DepsUninstallCommand
         };
         var dryRunOpt = new Option<bool>("--dry-run", "Show what would be removed without removing");
 
-        var command = new Command("uninstall", "🗑️  Uninstall APM packages");
+        var command = new Command("uninstall", Emoji.Replace(":wastebasket: Uninstall APM packages"));
         command.AddArgument(packagesArg);
         command.AddOption(dryRunOpt);
         command.SetHandler(ctx =>
@@ -80,12 +80,12 @@ public static class DepsUninstallCommand
                 if (currentDepStrings.Contains(package))
                 {
                     packagesToRemove.Add(package);
-                    ConsoleHelpers.Info($"✓ {package} - found in apm.yml");
+                    ConsoleHelpers.Info($"{package} - found in apm.yml", symbol: "tick");
                 }
                 else
                 {
                     packagesNotFound.Add(package);
-                    ConsoleHelpers.Warning($"✗ {package} - not found in apm.yml");
+                    ConsoleHelpers.Warning($"{package} - not found in apm.yml", symbol: "cross");
                 }
             }
 
@@ -165,7 +165,7 @@ public static class DepsUninstallCommand
                         try
                         {
                             Directory.Delete(packagePath, recursive: true);
-                            ConsoleHelpers.Info($"✓ Removed {package} from apm_modules/");
+                            ConsoleHelpers.Info($"Removed {package} from apm_modules/", symbol: "tick");
                             removedFromModules++;
 
                             // Cleanup empty parent directories up to apm_modules/
@@ -186,7 +186,7 @@ public static class DepsUninstallCommand
                         }
                         catch (Exception e)
                         {
-                            ConsoleHelpers.Error($"✗ Failed to remove {package} from apm_modules/: {e.Message}");
+                            ConsoleHelpers.Error($"Failed to remove {package} from apm_modules/: {e.Message}", symbol: "cross");
                         }
                     }
                     else

@@ -57,7 +57,7 @@ public static class Aggregator
             }
             catch (Exception e)
             {
-                Console.Error.WriteLine($"Error processing {workflowFile}: {e.Message}");
+                ConsoleHelpers.Warning($"Error processing {workflowFile}: {e.Message}");
             }
         }
 
@@ -86,7 +86,7 @@ public static class Aggregator
         }
         catch (Exception e)
         {
-            Console.Error.WriteLine($"Error writing to {outputFile}: {e.Message}");
+            ConsoleHelpers.Error($"Error writing to {outputFile}: {e.Message}");
             return (false, []);
         }
     }

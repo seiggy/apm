@@ -11,7 +11,7 @@ public static class ConfigShowCommand
 {
     public static Command Create()
     {
-        var command = new Command("show", "📋 Show current configuration");
+        var command = new Command("show", Emoji.Replace(":clipboard: Show current configuration"));
         command.SetHandler(ctx =>
         {
             ctx.ExitCode = Execute();
@@ -25,7 +25,7 @@ public static class ConfigShowCommand
         {
             Border = TableBorder.Rounded,
         };
-        table.Title = new TableTitle("⚙️  Current APM Configuration");
+        table.Title = new TableTitle(":gear: Current APM Configuration");
         table.AddColumn(new TableColumn("[bold yellow]Category[/]") { NoWrap = true });
         table.AddColumn(new TableColumn("[bold white]Setting[/]") { NoWrap = true });
         table.AddColumn(new TableColumn("[bold cyan]Value[/]"));

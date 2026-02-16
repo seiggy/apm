@@ -17,7 +17,7 @@ public static class InitCommand
         };
         var yesOpt = new Option<bool>(["--yes", "-y"], "Skip confirmation prompts");
 
-        var command = new Command("init", "🚀 Initialize a new APM project");
+        var command = new Command("init", Emoji.Replace(":rocket: Initialize a new APM project"));
         command.AddArgument(nameArg);
         command.AddOption(yesOpt);
         command.SetHandler(ctx =>
@@ -88,7 +88,7 @@ public static class InitCommand
 
             // Display created files table
             var filesTable = ConsoleHelpers.CreateFilesTable(
-                [("✨ apm.yml", "Project configuration")],
+                [(":sparkles: apm.yml", "Project configuration")],
                 title: "Created Files");
             AnsiConsole.Write(filesTable);
 
@@ -104,8 +104,8 @@ public static class InitCommand
             };
 
             ConsoleHelpers.Panel(
-                string.Join("\n", nextSteps.Select(s => $"• {s}")),
-                title: "💡 Next Steps",
+                string.Join("\n", nextSteps.Select(s => $"- {s}")),
+                title: ":light_bulb: Next Steps",
                 borderStyle: "cyan");
 
             return 0;

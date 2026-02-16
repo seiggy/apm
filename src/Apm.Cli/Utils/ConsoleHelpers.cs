@@ -13,27 +13,45 @@ public static class ConsoleHelpers
     /// </summary>
     public static readonly IReadOnlyDictionary<string, string> StatusSymbols = new Dictionary<string, string>
     {
-        ["success"] = "✨",
-        ["sparkles"] = "✨",
-        ["running"] = "🚀",
-        ["rocket"] = "🚀",
-        ["gear"] = "⚙️",
-        ["info"] = "💡",
-        ["bulb"] = "💡",
-        ["warning"] = "⚠️",
-        ["error"] = "❌",
-        ["check"] = "✅",
-        ["cross"] = "❌",
-        ["list"] = "📋",
-        ["clipboard"] = "📋",
-        ["preview"] = "👀",
-        ["eyes"] = "👀",
-        ["robot"] = "🤖",
-        ["metrics"] = "📊",
-        ["chart"] = "📊",
-        ["default"] = "📍",
-        ["folder"] = "📁",
-        ["cogs"] = "⚙️",
+        ["success"] = ":sparkles:",
+        ["sparkles"] = ":sparkles:",
+        ["running"] = ":rocket:",
+        ["rocket"] = ":rocket:",
+        ["gear"] = ":gear:",
+        ["info"] = ":light_bulb:",
+        ["bulb"] = ":light_bulb:",
+        ["warning"] = ":warning:",
+        ["error"] = ":cross_mark:",
+        ["check"] = ":check_mark_button:",
+        ["cross"] = ":cross_mark:",
+        ["tick"] = ":check_mark:",
+        ["list"] = ":clipboard:",
+        ["clipboard"] = ":clipboard:",
+        ["preview"] = ":eyes:",
+        ["eyes"] = ":eyes:",
+        ["robot"] = ":robot:",
+        ["metrics"] = ":bar_chart:",
+        ["chart"] = ":bar_chart:",
+        ["default"] = ":round_pushpin:",
+        ["folder"] = ":file_folder:",
+        ["cogs"] = ":gear:",
+        ["package"] = ":package:",
+        ["download"] = ":inbox_tray:",
+        ["broom"] = ":broom:",
+        ["target"] = ":direct_hit:",
+        ["books"] = ":books:",
+        ["page"] = ":page_facing_up:",
+        ["memo"] = ":memo:",
+        ["bolt"] = ":high_voltage:",
+        ["play"] = ":play_button:",
+        ["house"] = ":house:",
+        ["book"] = ":open_book:",
+        ["pencil"] = ":pencil:",
+        ["tree"] = ":deciduous_tree:",
+        ["trash"] = ":wastebasket:",
+        ["plug"] = ":electric_plug:",
+        ["search"] = ":magnifying_glass_tilted_left:",
+        ["information"] = ":information:",
     };
 
     /// <summary>
@@ -41,14 +59,17 @@ public static class ConsoleHelpers
     /// </summary>
     public static void Echo(string message, string color = "white", bool bold = false, string? symbol = null)
     {
-        if (symbol is not null && StatusSymbols.TryGetValue(symbol, out var emoji))
-        {
-            message = $"{emoji} {message}";
-        }
-
         var escaped = Markup.Escape(message);
         var style = bold ? $"bold {color}" : color;
-        AnsiConsole.MarkupLine($"[{style}]{escaped}[/]");
+
+        if (symbol is not null && StatusSymbols.TryGetValue(symbol, out var emoji))
+        {
+            AnsiConsole.MarkupLine($"{emoji} [{style}]{escaped}[/]");
+        }
+        else
+        {
+            AnsiConsole.MarkupLine($"[{style}]{escaped}[/]");
+        }
     }
 
     /// <summary>
@@ -107,7 +128,7 @@ public static class ConsoleHelpers
     public static Table CreateFilesTable(IEnumerable<(string Name, string Description)> files, string title = "Files")
     {
         var table = new Table()
-            .Title($"📋 {title}")
+            .Title($":clipboard: {Markup.Escape(title)}")
             .Border(TableBorder.Rounded);
 
         table.AddColumn(new TableColumn("[bold]File[/]").NoWrap());

@@ -1,3 +1,5 @@
+using Apm.Cli.Utils;
+
 namespace Apm.Cli.Workflow;
 
 /// <summary>Discovery functionality for workflow files.</summary>
@@ -40,7 +42,7 @@ public static class WorkflowDiscovery
             }
             catch (Exception ex)
             {
-                Console.Error.WriteLine($"Warning: Failed to parse {filePath}: {ex.Message}");
+                ConsoleHelpers.Warning($"Failed to parse {filePath}: {ex.Message}");
             }
         }
 

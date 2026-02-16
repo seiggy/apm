@@ -1,4 +1,5 @@
 using Apm.Cli.Models;
+using Apm.Cli.Utils;
 
 namespace Apm.Cli.Primitives;
 
@@ -68,7 +69,7 @@ public static class PrimitiveDiscovery
                 }
                 catch (Exception e)
                 {
-                    Console.Error.WriteLine($"Warning: Failed to parse {filePath}: {e.Message}");
+                    ConsoleHelpers.Warning($"Failed to parse {filePath}: {e.Message}");
                 }
             }
         }
@@ -116,7 +117,7 @@ public static class PrimitiveDiscovery
                 }
                 catch (Exception e)
                 {
-                    Console.Error.WriteLine($"Warning: Failed to parse local primitive {filePath}: {e.Message}");
+                    ConsoleHelpers.Warning($"Failed to parse local primitive {filePath}: {e.Message}");
                 }
             }
         }
@@ -187,7 +188,7 @@ public static class PrimitiveDiscovery
         }
         catch (Exception e)
         {
-            Console.Error.WriteLine($"Warning: Failed to parse dependency order from apm.yml: {e.Message}");
+            ConsoleHelpers.Warning($"Failed to parse dependency order from apm.yml: {e.Message}");
             return [];
         }
     }
@@ -220,7 +221,7 @@ public static class PrimitiveDiscovery
                         }
                         catch (Exception e)
                         {
-                            Console.Error.WriteLine($"Warning: Failed to parse dependency primitive {filePath}: {e.Message}");
+                            ConsoleHelpers.Warning($"Failed to parse dependency primitive {filePath}: {e.Message}");
                         }
                     }
                 }
@@ -265,7 +266,7 @@ public static class PrimitiveDiscovery
             }
             catch (Exception e)
             {
-                Console.Error.WriteLine($"Warning: Failed to parse SKILL.md: {e.Message}");
+                ConsoleHelpers.Warning($"Failed to parse SKILL.md: {e.Message}");
             }
         }
     }
@@ -282,7 +283,7 @@ public static class PrimitiveDiscovery
             }
             catch (Exception e)
             {
-                Console.Error.WriteLine($"Warning: Failed to parse SKILL.md in {directory}: {e.Message}");
+                ConsoleHelpers.Warning($"Failed to parse SKILL.md in {directory}: {e.Message}");
             }
         }
     }

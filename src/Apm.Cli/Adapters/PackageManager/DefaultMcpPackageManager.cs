@@ -1,6 +1,7 @@
 using System.Text.Json.Nodes;
 using Apm.Cli.Adapters.Client;
 using Apm.Cli.Core;
+using Apm.Cli.Utils;
 
 namespace Apm.Cli.Adapters.PackageManager;
 
@@ -17,12 +18,12 @@ public class DefaultMcpPackageManager : IPackageManagerAdapter
             var adapter = CreateClientAdapter();
             var result = adapter.ConfigureMcpServer(packageName, packageName, true);
             if (result)
-                Console.WriteLine($"Successfully installed {packageName}");
+                ConsoleHelpers.Success($"Successfully installed {packageName}");
             return result;
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error installing package {packageName}: {ex.Message}");
+            ConsoleHelpers.Error($"Error installing package {packageName}: {ex.Message}");
             return false;
         }
     }
@@ -40,16 +41,16 @@ public class DefaultMcpPackageManager : IPackageManagerAdapter
                 servers.Remove(packageName);
                 var result = adapter.UpdateConfig(config);
                 if (result)
-                    Console.WriteLine($"Successfully uninstalled {packageName}");
+                    ConsoleHelpers.Success($"Successfully uninstalled {packageName}");
                 return result;
             }
 
-            Console.WriteLine($"Package {packageName} not found in configuration");
+            ConsoleHelpers.Warning($"Package {packageName} not found in configuration");
             return false;
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error uninstalling package {packageName}: {ex.Message}");
+            ConsoleHelpers.Error($"Error uninstalling package {packageName}: {ex.Message}");
             return false;
         }
     }
@@ -66,7 +67,7 @@ public class DefaultMcpPackageManager : IPackageManagerAdapter
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error retrieving installed MCP servers: {ex.Message}");
+            ConsoleHelpers.Error($"Error retrieving installed MCP servers: {ex.Message}");
             return [];
         }
     }
@@ -74,7 +75,7 @@ public class DefaultMcpPackageManager : IPackageManagerAdapter
     public List<string> Search(string query)
     {
         // Placeholder: registry search integration would go here
-        Console.WriteLine("Warning: Package search not yet implemented in .NET port");
+        ConsoleHelpers.Warning("Package search not yet implemented in .NET port");
         return [];
     }
 

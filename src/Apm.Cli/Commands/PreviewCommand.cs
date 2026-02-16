@@ -19,7 +19,7 @@ public static class PreviewCommand
             AllowMultipleArgumentsPerToken = true,
         };
 
-        var command = new Command("preview", "👀 Preview a script's compiled prompt files");
+        var command = new Command("preview", Emoji.Replace(":eyes: Preview a script's compiled prompt files"));
         command.AddArgument(scriptArg);
         command.AddOption(paramOpt);
         command.SetHandler(ctx =>
@@ -80,7 +80,7 @@ public static class PreviewCommand
             }
 
             // Show original command
-            ConsoleHelpers.Panel(command, title: "📄 Original command", borderStyle: "blue");
+            ConsoleHelpers.Panel(command, title: ":page_facing_up: Original command", borderStyle: "blue");
 
             // Auto-compile prompts to show what would be executed
             var (compiledCommand, compiledFiles) = PreviewAutoCompilePrompts(
@@ -88,7 +88,7 @@ public static class PreviewCommand
 
             if (compiledFiles.Count > 0)
             {
-                ConsoleHelpers.Panel(compiledCommand, title: "⚡ Compiled command", borderStyle: "green");
+                ConsoleHelpers.Panel(compiledCommand, title: ":high_voltage: Compiled command", borderStyle: "green");
 
                 // Show compiled files
                 var fileLines = compiledFiles
@@ -97,24 +97,24 @@ public static class PreviewCommand
                         var stem = Path.GetFileNameWithoutExtension(
                             Path.GetFileNameWithoutExtension(f));
                         var compiledPath = Path.Combine(".apm", "compiled", $"{stem}.txt");
-                        return $"📄 {compiledPath}";
+                        return $":page_facing_up: {compiledPath}";
                     });
                 ConsoleHelpers.Panel(
                     string.Join("\n", fileLines),
-                    title: "📁 Compiled prompt files",
+                    title: ":file_folder: Compiled prompt files",
                     borderStyle: "cyan");
             }
             else
             {
                 ConsoleHelpers.Panel(compiledCommand,
-                    title: "⚡ Command (no prompt compilation)",
+                    title: ":high_voltage: Command (no prompt compilation)",
                     borderStyle: "yellow");
 
                 ConsoleHelpers.Panel(
                     "No .prompt.md files were compiled.\n\n" +
                     "APM only compiles files ending with '.prompt.md' extension.\n" +
                     "Other files are executed as-is by the runtime.",
-                    title: "ℹ️  Compilation Info",
+                    title: ":information: Compilation Info",
                     borderStyle: "cyan");
             }
 

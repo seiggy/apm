@@ -53,7 +53,7 @@ public class CopilotClientAdapter : IClientAdapter
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error updating Copilot configuration: {ex.Message}");
+            ConsoleHelpers.Error($"Error updating Copilot configuration: {ex.Message}");
             return false;
         }
     }
@@ -91,7 +91,7 @@ public class CopilotClientAdapter : IClientAdapter
     {
         if (string.IsNullOrWhiteSpace(serverUrl))
         {
-            Console.WriteLine("Error: serverUrl cannot be empty");
+            ConsoleHelpers.Error("Error: serverUrl cannot be empty");
             return false;
         }
 
@@ -105,7 +105,7 @@ public class CopilotClientAdapter : IClientAdapter
 
             if (serverInfo == null || serverInfo.Count == 0)
             {
-                Console.WriteLine($"Error: MCP server '{serverUrl}' not found in registry");
+                ConsoleHelpers.Error($"Error: MCP server '{serverUrl}' not found in registry");
                 return false;
             }
 
@@ -148,12 +148,12 @@ public class CopilotClientAdapter : IClientAdapter
             mcpServers[configKey] = JsonSerializationHelper.DictToJsonObject(serverConfig);
             File.WriteAllText(configPath, root.ToJsonString(WriteOptions));
 
-            Console.WriteLine($"Successfully configured MCP server '{configKey}' for Copilot CLI");
+            ConsoleHelpers.Success($"Successfully configured MCP server '{configKey}' for Copilot CLI");
             return true;
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error configuring MCP server: {ex.Message}");
+            ConsoleHelpers.Error($"Error configuring MCP server: {ex.Message}");
             return false;
         }
     }

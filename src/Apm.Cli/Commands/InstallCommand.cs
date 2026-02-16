@@ -24,7 +24,7 @@ public static class InstallCommand
         var dryRunOpt = new Option<bool>("--dry-run", "Show what would be installed without installing");
         var verboseOpt = new Option<bool>("--verbose", "Show detailed installation information");
 
-        var command = new Command("install", "📦 Install APM packages");
+        var command = new Command("install", Emoji.Replace(":package: Install APM packages"));
         command.AddArgument(packagesArg);
         command.AddOption(runtimeOpt);
         command.AddOption(excludeOpt);
@@ -80,7 +80,7 @@ public static class InstallCommand
             if (!apmYmlExists)
             {
                 ConsoleHelpers.Error("No apm.yml found");
-                ConsoleHelpers.Info("💡 Run 'apm init' to create one, or:");
+                ConsoleHelpers.Info("Run 'apm init' to create one, or:", symbol: "info");
                 ConsoleHelpers.Info("   apm install <org/repo> to auto-create + install");
                 return 1;
             }
@@ -325,7 +325,7 @@ public static class InstallCommand
 
                     if (skipDownload)
                     {
-                        ConsoleHelpers.Info($"✓ {displayName} @{depRef.Reference} (cached)");
+                        ConsoleHelpers.Info($"{displayName} @{depRef.Reference} (cached)", symbol: "tick");
                     }
                     else
                     {
@@ -349,11 +349,11 @@ public static class InstallCommand
                         {
                             downloader.DownloadPackage(downloadRef, installPath);
                             installedCount++;
-                            ConsoleHelpers.Success($"✓ {displayName}");
+                            ConsoleHelpers.Success($"{displayName}", symbol: "tick");
                         }
                         catch (Exception e)
                         {
-                            ConsoleHelpers.Error($"✗ Failed to install {displayName}: {e.Message}");
+                            ConsoleHelpers.Error($"Failed to install {displayName}: {e.Message}", symbol: "cross");
                             continue;
                         }
                     }
@@ -434,7 +434,7 @@ public static class InstallCommand
                     }
                     catch (Exception e)
                     {
-                        ConsoleHelpers.Warning($"  ⚠ Failed to integrate primitives: {e.Message}");
+                        ConsoleHelpers.Warning($"  :warning: Failed to integrate primitives: {e.Message}");
                     }
                 }
             });
@@ -516,12 +516,12 @@ public static class InstallCommand
 
             if (currentDeps.Contains(package))
             {
-                ConsoleHelpers.Info($"✓ {package} - already in apm.yml, ensuring installation...");
+                ConsoleHelpers.Info($"{package} - already in apm.yml, ensuring installation...", symbol: "tick");
             }
             else
             {
                 validated.Add(package);
-                ConsoleHelpers.Info($"✓ {package} - will be added");
+                ConsoleHelpers.Info($"{package} - will be added", symbol: "tick");
             }
         }
 
@@ -559,16 +559,16 @@ public static class InstallCommand
     private static void ShowInstallSummary(int apmCount, int promptCount, int agentCount, int mcpCount)
     {
         var lines = new List<string>();
-        if (apmCount > 0) lines.Add($"📦 {apmCount} APM package(s) installed");
-        if (promptCount > 0) lines.Add($"📝 {promptCount} prompt(s) integrated");
-        if (agentCount > 0) lines.Add($"🤖 {agentCount} agent(s) integrated");
-        if (mcpCount > 0) lines.Add($"🔌 {mcpCount} MCP server(s) configured");
+        if (apmCount > 0) lines.Add($":package: {apmCount} APM package(s) installed");
+        if (promptCount > 0) lines.Add($":memo: {promptCount} prompt(s) integrated");
+        if (agentCount > 0) lines.Add($":robot: {agentCount} agent(s) integrated");
+        if (mcpCount > 0) lines.Add($":electric_plug: {mcpCount} MCP server(s) configured");
 
         if (lines.Count > 0)
         {
             ConsoleHelpers.Panel(
                 string.Join("\n", lines),
-                title: "✨ Install Summary",
+                title: ":sparkles: Install Summary",
                 borderStyle: "green");
         }
         else

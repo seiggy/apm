@@ -19,7 +19,7 @@ public static class RunCommand
             AllowMultipleArgumentsPerToken = true,
         };
 
-        var command = new Command("run", "▶️  Run a script with parameters");
+        var command = new Command("run", Emoji.Replace(":play_button: Run a script with parameters"));
         command.AddArgument(scriptArg);
         command.AddOption(paramOpt);
         command.SetHandler(ctx =>

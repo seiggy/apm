@@ -10,7 +10,7 @@ public static class DepsVerifyCommand
 {
     public static Command Create()
     {
-        var command = new Command("verify", "✅ Verify installed dependencies");
+        var command = new Command("verify", Emoji.Replace(":check_mark_button: Verify installed dependencies"));
         command.SetHandler(ctx =>
         {
             ctx.ExitCode = Execute();
@@ -39,7 +39,7 @@ public static class DepsVerifyCommand
 
             // Display results
             var table = new Table()
-                .Title("✅ Dependency Verification")
+                .Title(":check_mark_button: Dependency Verification")
                 .Border(TableBorder.Rounded);
             table.AddColumn(new TableColumn("[bold cyan]Check[/]").NoWrap());
             table.AddColumn(new TableColumn("[bold cyan]Status[/]"));
@@ -48,7 +48,7 @@ public static class DepsVerifyCommand
             // Declared deps check
             table.AddRow(
                 "Declared dependencies",
-                allInstalled ? "[green]✅ Pass[/]" : "[red]❌ Fail[/]",
+                allInstalled ? "[green]:check_mark_button: Pass[/]" : "[red]:cross_mark: Fail[/]",
                 allInstalled
                     ? $"[green]{installed.Count} installed[/]"
                     : $"[red]{missing.Count} missing, {installed.Count} installed[/]");
@@ -59,14 +59,14 @@ public static class DepsVerifyCommand
             {
                 table.AddRow(
                     "Lockfile integrity",
-                    lockMatch ? "[green]✅ Pass[/]" : "[red]❌ Fail[/]",
+                    lockMatch ? "[green]:check_mark_button: Pass[/]" : "[red]:cross_mark: Fail[/]",
                     lockMatch
                         ? $"[green]{lockMatched.Count} matched[/]"
                         : $"[red]{lockMismatched.Count} mismatched[/]");
             }
             else
             {
-                table.AddRow("Lockfile integrity", "[yellow]⚠️ Skip[/]", "[dim]No lockfile found[/]");
+                table.AddRow("Lockfile integrity", "[yellow]:warning: Skip[/]", "[dim]No lockfile found[/]");
             }
 
             AnsiConsole.Write(table);
@@ -77,7 +77,7 @@ public static class DepsVerifyCommand
                 AnsiConsole.WriteLine();
                 ConsoleHelpers.Warning("Missing dependencies:");
                 foreach (var dep in missing)
-                    AnsiConsole.MarkupLine($"  [red]❌ {Markup.Escape(dep)}[/]");
+                    AnsiConsole.MarkupLine($"  :cross_mark: [red]{Markup.Escape(dep)}[/]");
                 AnsiConsole.WriteLine();
                 ConsoleHelpers.Info("Run 'apm install' to install missing dependencies", symbol: "bulb");
             }
@@ -87,7 +87,7 @@ public static class DepsVerifyCommand
                 AnsiConsole.WriteLine();
                 ConsoleHelpers.Warning("Lockfile mismatches:");
                 foreach (var dep in lockMismatched)
-                    AnsiConsole.MarkupLine($"  [yellow]⚠️ {Markup.Escape(dep)}[/]");
+                    AnsiConsole.MarkupLine($"  :warning: [yellow]{Markup.Escape(dep)}[/]");
             }
 
             return allInstalled && lockMatch ? 0 : 1;

@@ -1,3 +1,4 @@
+using Spectre.Console;
 using Apm.Cli.Primitives;
 using Apm.Cli.Utils;
 
@@ -114,7 +115,7 @@ public class AgentsCompiler
             verbose: config.Debug || config.Trace,
             debug: config.Debug);
         if (displayOutput is not null)
-            Console.Write(displayOutput);
+            AnsiConsole.Write(new Text(displayOutput));
 
         if (!distributedResult.Success)
         {
@@ -245,7 +246,7 @@ public class AgentsCompiler
             foreach (var claudePath in claudeResult.ContentMap.Keys)
             {
                 var relPath = Path.GetRelativePath(_baseDir, claudePath);
-                previewLines.Add($"  📄 {relPath}");
+                previewLines.Add(Emoji.Replace($"  :page_facing_up: {relPath}"));
             }
 
             return new CompilationResult
@@ -301,7 +302,7 @@ public class AgentsCompiler
         var displayOutput = _distributedCompiler.FormatCompilationOutput(
             config.DryRun, verbose: config.Debug || config.Trace, debug: config.Debug);
         if (displayOutput is not null)
-            Console.Write(displayOutput);
+            AnsiConsole.Write(new Text(displayOutput));
 
         var summaryLines = new List<string>
         {
@@ -499,7 +500,7 @@ public class AgentsCompiler
         foreach (var placement in result.Placements)
         {
             var relPath = Path.GetRelativePath(_baseDir, placement.AgentsPath);
-            lines.Add($"📄 {relPath}");
+            lines.Add(Emoji.Replace($":page_facing_up: {relPath}"));
             lines.Add($"   Instructions: {placement.Instructions.Count}");
             lines.Add($"   Patterns: {string.Join(", ", placement.CoveragePatterns.Order())}");
             lines.Add("");

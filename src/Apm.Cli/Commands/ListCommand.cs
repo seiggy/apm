@@ -10,7 +10,7 @@ public static class ListCommand
 {
     public static Command Create()
     {
-        var command = new Command("list", "📋 List available scripts in the current project");
+        var command = new Command("list", Emoji.Replace(":clipboard: List available scripts in the current project"));
         command.SetHandler(ctx =>
         {
             ctx.ExitCode = Execute();
@@ -44,7 +44,7 @@ public static class ListCommand
             string? defaultScript = scripts.ContainsKey("start") ? "start" : null;
 
             var table = new Table()
-                .Title("📋 Available Scripts")
+                .Title(":clipboard: Available Scripts")
                 .Border(TableBorder.Rounded);
 
             table.AddColumn(new TableColumn("").Width(3));

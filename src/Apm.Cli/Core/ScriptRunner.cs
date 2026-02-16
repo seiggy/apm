@@ -28,7 +28,7 @@ public sealed class ScriptRunner
     /// </summary>
     public bool RunScript(string scriptName, Dictionary<string, string> parameters)
     {
-        ConsoleHelpers.Info($"🚀 Running script: {scriptName}");
+        ConsoleHelpers.Info($"Running script: {scriptName}", symbol: "running");
 
         var isVirtualPackage = IsVirtualPackageReference(scriptName);
 
@@ -66,7 +66,7 @@ public sealed class ScriptRunner
         // 2.5 Try auto-install if it looks like a virtual package reference
         if (isVirtualPackage)
         {
-            ConsoleHelpers.Info($"📦 Auto-installing virtual package: {scriptName}");
+            ConsoleHelpers.Info($"Auto-installing virtual package: {scriptName}", symbol: "package");
             if (AutoInstallVirtualPackage(scriptName))
             {
                 // Extract the prompt filename from the reference for retry discovery
@@ -74,7 +74,7 @@ public sealed class ScriptRunner
                 var retryPrompt = DiscoverPromptFile(retryName ?? scriptName);
                 if (retryPrompt is not null)
                 {
-                    ConsoleHelpers.Success("✨ Package installed and ready to run");
+                    ConsoleHelpers.Success("Package installed and ready to run", symbol: "sparkles");
                     var runtime = DetectInstalledRuntime();
                     var generatedCommand = GenerateRuntimeCommand(runtime, retryPrompt);
                     return ExecuteScriptCommand(generatedCommand, parameters);
@@ -135,13 +135,13 @@ public sealed class ScriptRunner
                 exitCode = ExecuteShellCommand(compiledCommand, env);
 
             var elapsed = Stopwatch.GetElapsedTime(startTime);
-            ConsoleHelpers.Success($"✨ Script completed in {elapsed.TotalSeconds:F1}s ({runtime})");
+            ConsoleHelpers.Success($"Script completed in {elapsed.TotalSeconds:F1}s ({runtime})", symbol: "sparkles");
 
             return exitCode == 0;
         }
         catch (Exception e)
         {
-            ConsoleHelpers.Error($"❌ Script execution failed: {e.Message}");
+            ConsoleHelpers.Error($"Script execution failed: {e.Message}", symbol: "error");
             throw new InvalidOperationException($"Script execution failed: {e.Message}", e);
         }
     }
@@ -570,16 +570,16 @@ public sealed class ScriptRunner
                 return true;
             }
 
-            ConsoleHelpers.Info($"📥 Downloading from {depRef.ToGitHubUrl()}");
+            ConsoleHelpers.Info($"Downloading from {depRef.ToGitHubUrl()}", symbol: "download");
             var packageInfo = downloader.DownloadPackage(normalizedRef, targetPath);
-            ConsoleHelpers.Success($"✅ Installed {packageInfo.Package.Name} v{packageInfo.Package.Version}");
+            ConsoleHelpers.Success($"Installed {packageInfo.Package.Name} v{packageInfo.Package.Version}", symbol: "check");
 
             AddDependencyToConfig(normalizedRef);
             return true;
         }
         catch (Exception e)
         {
-            ConsoleHelpers.Error($"❌ Auto-install failed: {e.Message}");
+            ConsoleHelpers.Error($"Auto-install failed: {e.Message}", symbol: "error");
             return false;
         }
     }

@@ -368,7 +368,7 @@ public class ValidationResultTests
     {
         var result = new ValidationResult();
         result.AddWarning("warn");
-        result.Summary().Should().Contain("⚠️");
+        result.Summary().Should().Contain("⚠");
     }
 
     [Fact]

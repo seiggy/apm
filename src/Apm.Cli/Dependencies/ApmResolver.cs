@@ -1,3 +1,4 @@
+using Spectre.Console;
 using Apm.Cli.Models;
 
 namespace Apm.Cli.Dependencies;
@@ -334,7 +335,7 @@ public class ApmDependencyResolver
         if ((bool)summary["has_errors"])
             lines.Add($"  Resolution errors: {summary["error_count"]}");
 
-        lines.Add($"  Status: {((bool)summary["is_valid"] ? "✅ Valid" : "❌ Invalid")}");
+        lines.Add($"  Status: {((bool)summary["is_valid"] ? Emoji.Replace(":check_mark_button: Valid") : Emoji.Replace(":cross_mark: Invalid"))}");
 
         return string.Join("\n", lines);
     }

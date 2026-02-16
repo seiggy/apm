@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using Spectre.Console;
 
 namespace Apm.Cli.Runtime;
 
@@ -47,7 +48,7 @@ public abstract class RuntimeBase : IRuntimeAdapter
             var line = process.StandardOutput.ReadLine();
             if (line is not null)
             {
-                Console.WriteLine(line);
+                AnsiConsole.WriteLine(line);
                 outputLines.Add(line);
             }
         }

@@ -1,3 +1,4 @@
+using Spectre.Console;
 using Apm.Cli.Utils;
 using YamlDotNet.Serialization;
 
@@ -185,9 +186,9 @@ public class ValidationResult
     public string Summary()
     {
         if (IsValid && Warnings.Count == 0)
-            return "✅ Package is valid";
+            return Emoji.Replace(":check_mark_button: Package is valid");
         if (IsValid)
-            return $"⚠️ Package is valid with {Warnings.Count} warning(s)";
-        return $"❌ Package is invalid with {Errors.Count} error(s)";
+            return Emoji.Replace($":warning: Package is valid with {Warnings.Count} warning(s)");
+        return Emoji.Replace($":cross_mark: Package is invalid with {Errors.Count} error(s)");
     }
 }

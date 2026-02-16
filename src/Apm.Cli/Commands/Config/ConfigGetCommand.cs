@@ -16,7 +16,7 @@ public static class ConfigGetCommand
             Arity = ArgumentArity.ZeroOrOne,
         };
 
-        var command = new Command("get", "📖 Get configuration value");
+        var command = new Command("get", Emoji.Replace(":open_book: Get configuration value"));
         command.AddArgument(keyArg);
         command.SetHandler(ctx =>
         {

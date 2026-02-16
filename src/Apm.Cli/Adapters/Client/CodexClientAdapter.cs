@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
+using Spectre.Console;
 using Apm.Cli.Registry;
 using Apm.Cli.Utils;
 
@@ -52,7 +53,7 @@ public class CodexClientAdapter : IClientAdapter
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error updating Codex configuration: {ex.Message}");
+            ConsoleHelpers.Error($"Error updating Codex configuration: {ex.Message}");
             return false;
         }
     }
@@ -84,7 +85,7 @@ public class CodexClientAdapter : IClientAdapter
     {
         if (string.IsNullOrWhiteSpace(serverUrl))
         {
-            Console.WriteLine("Error: serverUrl cannot be empty");
+            ConsoleHelpers.Error("Error: serverUrl cannot be empty");
             return false;
         }
 
@@ -98,7 +99,7 @@ public class CodexClientAdapter : IClientAdapter
 
             if (serverInfo == null || serverInfo.Count == 0)
             {
-                Console.WriteLine($"Error: MCP server '{serverUrl}' not found in registry");
+                ConsoleHelpers.Error($"Error: MCP server '{serverUrl}' not found in registry");
                 return false;
             }
 
@@ -112,10 +113,10 @@ public class CodexClientAdapter : IClientAdapter
 
             if (hasRemotes && !hasPackages)
             {
-                Console.WriteLine($"⚠️  Warning: MCP server '{serverUrl}' is a remote server (SSE type)");
-                Console.WriteLine("   Codex CLI only supports local servers with command/args configuration");
-                Console.WriteLine("   Remote servers are not supported by Codex CLI");
-                Console.WriteLine("   Skipping installation for Codex CLI");
+                ConsoleHelpers.Warning($"Warning: MCP server '{serverUrl}' is a remote server (SSE type)", symbol: "warning");
+                AnsiConsole.MarkupLine("   Codex CLI only supports local servers with command/args configuration");
+                AnsiConsole.MarkupLine("   Remote servers are not supported by Codex CLI");
+                AnsiConsole.MarkupLine("   Skipping installation for Codex CLI");
                 return false;
             }
 
@@ -131,12 +132,12 @@ public class CodexClientAdapter : IClientAdapter
             var serverConfig = FormatServerConfig(serverInfo, envOverrides, runtimeVars);
             UpdateConfig(new Dictionary<string, object?> { [configKey] = serverConfig });
 
-            Console.WriteLine($"Successfully configured MCP server '{configKey}' for Codex CLI");
+            ConsoleHelpers.Success($"Successfully configured MCP server '{configKey}' for Codex CLI");
             return true;
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error configuring MCP server: {ex.Message}");
+            ConsoleHelpers.Error($"Error configuring MCP server: {ex.Message}");
             return false;
         }
     }

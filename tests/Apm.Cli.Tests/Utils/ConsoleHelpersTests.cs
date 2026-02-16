@@ -17,11 +17,11 @@ public class ConsoleHelpersTests
     }
 
     [Fact]
-    public void GetSymbol_KnownKey_ReturnsEmoji()
+    public void GetSymbol_KnownKey_ReturnsSpectreToken()
     {
-        ConsoleHelpers.GetSymbol("success").Should().Be("✨");
-        ConsoleHelpers.GetSymbol("error").Should().Be("❌");
-        ConsoleHelpers.GetSymbol("check").Should().Be("✅");
+        ConsoleHelpers.GetSymbol("success").Should().Be(":sparkles:");
+        ConsoleHelpers.GetSymbol("error").Should().Be(":cross_mark:");
+        ConsoleHelpers.GetSymbol("check").Should().Be(":check_mark_button:");
     }
 
     [Fact]

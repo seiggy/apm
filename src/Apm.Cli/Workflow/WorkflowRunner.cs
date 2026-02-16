@@ -1,4 +1,6 @@
+using Spectre.Console;
 using Apm.Cli.Runtime;
+using Apm.Cli.Utils;
 
 namespace Apm.Cli.Workflow;
 
@@ -33,10 +35,10 @@ public static class WorkflowRunner
 
         if (missingParams.Count > 0)
         {
-            Console.WriteLine($"Workflow '{workflowDef.Name}' requires the following parameters:");
+            AnsiConsole.MarkupLine($"Workflow '{Markup.Escape(workflowDef.Name)}' requires the following parameters:");
             foreach (var param in missingParams)
             {
-                Console.Write($"  {param}: ");
+                AnsiConsole.Markup($"  {Markup.Escape(param)}: ");
                 var value = Console.ReadLine() ?? "";
                 result[param] = value;
             }
@@ -64,7 +66,7 @@ public static class WorkflowRunner
                 }
                 catch (Exception ex)
                 {
-                    Console.Error.WriteLine($"Error parsing workflow file {name}: {ex.Message}");
+                    ConsoleHelpers.Warning($"Error parsing workflow file {name}: {ex.Message}");
                     return null;
                 }
             }
@@ -108,8 +110,8 @@ public static class WorkflowRunner
 
         if (!string.IsNullOrEmpty(workflow.LlmModel) && !string.IsNullOrEmpty(fallbackLlm))
         {
-            Console.Error.WriteLine(
-                $"WARNING: Both frontmatter 'llm: {workflow.LlmModel}' and --llm '{fallbackLlm}' specified. " +
+            ConsoleHelpers.Warning(
+                $"Both frontmatter 'llm: {workflow.LlmModel}' and --llm '{fallbackLlm}' specified. " +
                 $"Using frontmatter value: {workflow.LlmModel}");
         }
 
