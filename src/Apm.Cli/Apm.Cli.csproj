@@ -13,8 +13,8 @@
 
     <!-- NuGet metadata -->
     <PackageId>apm-cli</PackageId>
-    <Version>0.7.2</Version>
-    <Authors>Daniel Meppiel</Authors>
+    <Version>0.7.3</Version>
+    <Authors>Daniel Meppiel;Zack Way</Authors>
     <Description>The dependency manager for AI agents. Declare skills, prompts, instructions, and tools in apm.yml.</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/seiggy/apm-dotnet</PackageProjectUrl>
