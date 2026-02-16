@@ -59,7 +59,7 @@ public static class InitCommand
             {
                 ConsoleHelpers.Warning("apm.yml already exists");
 
-                if (!yes)
+                if (!yes && !Console.IsInputRedirected && Environment.UserInteractive)
                 {
                     if (!AnsiConsole.Confirm("Continue and overwrite?", defaultValue: false))
                     {
@@ -75,7 +75,7 @@ public static class InitCommand
 
             // Get project configuration
             Dictionary<string, string> config;
-            if (!yes)
+            if (!yes && !Console.IsInputRedirected && Environment.UserInteractive)
                 config = InteractiveProjectSetup(finalProjectName);
             else
                 config = GetDefaultConfig(finalProjectName);

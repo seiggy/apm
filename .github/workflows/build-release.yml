@@ -240,7 +240,7 @@ jobs:
           echo "=== Init test project ==="
           mkdir -p /tmp/apm-integration-test
           cd /tmp/apm-integration-test
-          "$GITHUB_WORKSPACE/artifact/${{ matrix.artifact }}/${{ matrix.binary }}" init test-project
+          "$GITHUB_WORKSPACE/artifact/${{ matrix.artifact }}/${{ matrix.binary }}" init --yes test-project
           cd test-project
 
           echo "=== Compile dry-run ==="
@@ -266,7 +266,7 @@ jobs:
           $TestDir = Join-Path $env:TEMP "apm-integration-test"
           New-Item -ItemType Directory -Force -Path $TestDir | Out-Null
           Set-Location $TestDir
-          & "$env:GITHUB_WORKSPACE\artifact\${{ matrix.artifact }}\${{ matrix.binary }}" init test-project
+          & "$env:GITHUB_WORKSPACE\artifact\${{ matrix.artifact }}\${{ matrix.binary }}" init --yes test-project
           Set-Location test-project
 
           Write-Host "=== Compile dry-run ==="
@@ -343,7 +343,7 @@ jobs:
           "$BINARY" --version
 
           echo "=== Create test project ==="
-          "$BINARY" init release-validation-project
+          "$BINARY" init --yes release-validation-project
           cd release-validation-project
 
           echo "=== Compile dry-run ==="
@@ -375,7 +375,7 @@ jobs:
           & $Binary --version
 
           Write-Host "=== Create test project ==="
-          & $Binary init release-validation-project
+          & $Binary init --yes release-validation-project
           Set-Location release-validation-project
 
           Write-Host "=== Compile dry-run ==="
