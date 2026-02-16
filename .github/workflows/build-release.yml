@@ -231,7 +231,7 @@ jobs:
           GITHUB_APM_PAT: ${{ secrets.GH_CLI_PAT }}
           ADO_APM_PAT: ${{ secrets.ADO_APM_PAT }}
         run: |
-          BINARY="./artifact/publish/${{ matrix.artifact }}/${{ matrix.binary }}"
+          BINARY="./artifact/${{ matrix.artifact }}/${{ matrix.binary }}"
           chmod +x "$BINARY"
 
           echo "=== Version check ==="
@@ -240,11 +240,11 @@ jobs:
           echo "=== Init test project ==="
           mkdir -p /tmp/apm-integration-test
           cd /tmp/apm-integration-test
-          "$GITHUB_WORKSPACE/artifact/publish/${{ matrix.artifact }}/${{ matrix.binary }}" init test-project
+          "$GITHUB_WORKSPACE/artifact/${{ matrix.artifact }}/${{ matrix.binary }}" init test-project
           cd test-project
 
           echo "=== Compile dry-run ==="
-          "$GITHUB_WORKSPACE/artifact/publish/${{ matrix.artifact }}/${{ matrix.binary }}" compile --dry-run
+          "$GITHUB_WORKSPACE/artifact/${{ matrix.artifact }}/${{ matrix.binary }}" compile --dry-run
 
           echo "=== Integration tests passed ==="
         timeout-minutes: 20
@@ -257,7 +257,7 @@ jobs:
           GITHUB_APM_PAT: ${{ secrets.GH_CLI_PAT }}
           ADO_APM_PAT: ${{ secrets.ADO_APM_PAT }}
         run: |
-          $Binary = ".\artifact\publish\${{ matrix.artifact }}\${{ matrix.binary }}"
+          $Binary = ".\artifact\${{ matrix.artifact }}\${{ matrix.binary }}"
 
           Write-Host "=== Version check ==="
           & $Binary --version
@@ -266,11 +266,11 @@ jobs:
           $TestDir = Join-Path $env:TEMP "apm-integration-test"
           New-Item -ItemType Directory -Force -Path $TestDir | Out-Null
           Set-Location $TestDir
-          & "$env:GITHUB_WORKSPACE\artifact\publish\${{ matrix.artifact }}\${{ matrix.binary }}" init test-project
+          & "$env:GITHUB_WORKSPACE\artifact\${{ matrix.artifact }}\${{ matrix.binary }}" init test-project
           Set-Location test-project
 
           Write-Host "=== Compile dry-run ==="
-          & "$env:GITHUB_WORKSPACE\artifact\publish\${{ matrix.artifact }}\${{ matrix.binary }}" compile --dry-run
+          & "$env:GITHUB_WORKSPACE\artifact\${{ matrix.artifact }}\${{ matrix.binary }}" compile --dry-run
 
           Write-Host "=== Integration tests passed ==="
         timeout-minutes: 20
@@ -333,7 +333,7 @@ jobs:
           ADO_APM_PAT: ${{ secrets.ADO_APM_PAT }}
         run: |
           cd "${{ steps.paths.outputs.isolated_dir }}"
-          BINARY="./publish/${{ matrix.artifact }}/${{ matrix.binary }}"
+          BINARY="./${{ matrix.artifact }}/${{ matrix.binary }}"
           chmod +x "$BINARY"
 
           echo "=== Verify isolation (no source checkout) ==="
@@ -362,7 +362,7 @@ jobs:
         run: |
           $IsolatedDir = "${{ steps.paths.outputs.isolated_dir }}"
           Set-Location $IsolatedDir
-          $Binary = Join-Path $IsolatedDir "publish/${{ matrix.artifact }}/${{ matrix.binary }}"
+          $Binary = Join-Path $IsolatedDir "${{ matrix.artifact }}/${{ matrix.binary }}"
 
           Write-Host "=== Verify isolation (no source checkout) ==="
           if (Test-Path "apm.slnx") {
@@ -414,8 +414,8 @@ jobs:
 
           # Process Unix artifacts (tar.gz)
           for artifact in apm-linux-x64 apm-linux-arm64 apm-osx-x64 apm-osx-arm64; do
-            tarball="./dist/${artifact}/publish/${artifact}.tar.gz"
-            checksum="./dist/${artifact}/publish/${artifact}.tar.gz.sha256"
+            tarball="./dist/${artifact}/${artifact}.tar.gz"
+            checksum="./dist/${artifact}/${artifact}.tar.gz.sha256"
             if [ -f "$tarball" ]; then
               cp "$tarball" "./release/"
               [ -f "$checksum" ] && cp "$checksum" "./release/"
@@ -428,8 +428,8 @@ jobs:
 
           # Process Windows artifact (zip)
           for artifact in apm-win-x64; do
-            zipfile="./dist/${artifact}/publish/${artifact}.zip"
-            checksum="./dist/${artifact}/publish/${artifact}.zip.sha256"
+            zipfile="./dist/${artifact}/${artifact}.zip"
+            checksum="./dist/${artifact}/${artifact}.zip.sha256"
             if [ -f "$zipfile" ]; then
               cp "$zipfile" "./release/"
               [ -f "$checksum" ] && cp "$checksum" "./release/"
