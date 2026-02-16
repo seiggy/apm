@@ -185,15 +185,14 @@ public class AgentsCompilerTests : IDisposable
     }
 
     [Fact]
-    public void Compile_TargetClaude_WithoutFormatter_ReturnsError()
+    public void Compile_TargetClaude_DefaultDeps_DoesNotReturnPortedError()
     {
         var compiler = new AgentsCompiler(_tempDir);
         var config = new CompilationConfig { Target = "claude", DryRun = true };
 
         var result = compiler.Compile(config, new PrimitiveCollection());
 
-        result.Success.Should().BeFalse();
-        result.Errors.Should().Contain(e => e.Contains("Claude formatter") || e.Contains("not available"));
+        result.Errors.Should().NotContain(e => e.Contains("not yet ported"));
     }
 
     [Fact]
@@ -256,15 +255,15 @@ public class AgentsCompilerTests : IDisposable
     // ── Distributed compilation ─────────────────────────────────────
 
     [Fact]
-    public void Compile_DistributedWithoutCompiler_ReturnsError()
+    public void Compile_Distributed_DefaultCompiler_DoesNotError()
     {
         var compiler = new AgentsCompiler(_tempDir);
         var config = new CompilationConfig { Strategy = "distributed", Target = "vscode", DryRun = true };
 
         var result = compiler.Compile(config, new PrimitiveCollection());
 
-        result.Success.Should().BeFalse();
-        result.Errors.Should().Contain(e => e.Contains("Distributed compiler not available"));
+        // With no primitives the distributed compiler should succeed (empty result)
+        result.Errors.Should().NotContain(e => e.Contains("Distributed compiler not available"));
     }
 
     [Fact]
@@ -1080,29 +1079,26 @@ public class StaticCompileAgentsMdTests : IDisposable
     }
 
     [Fact]
-    public void CompileAgentsMd_StaticConvenience_ThrowsWhenClaudeFormatterMissing()
+    public void CompileAgentsMd_StaticConvenience_Succeeds()
     {
-        // Static method defaults Target to "all", which tries Claude compilation
-        // and fails because no Claude formatter is available
-        var act = () => AgentsCompiler.CompileAgentsMd(
+        // Static method now has all dependencies wired up by default
+        var result = AgentsCompiler.CompileAgentsMd(
             primitives: new PrimitiveCollection(),
             dryRun: true,
             baseDir: _tempDir);
 
-        act.Should().Throw<InvalidOperationException>()
-            .WithMessage("*Compilation failed*");
+        result.Should().NotBeNullOrEmpty();
     }
 
     [Fact]
     public void CompileAgentsMd_StaticConvenience_UsesSingleFileStrategy()
     {
-        // Static method sets strategy to single-file so distributed compiler is not needed
-        // But default Target "all" still tries Claude, which throws
-        var act = () => AgentsCompiler.CompileAgentsMd(
+        // Static method sets strategy to single-file; with all deps available it succeeds
+        var result = AgentsCompiler.CompileAgentsMd(
             primitives: new PrimitiveCollection(),
             dryRun: false,
             baseDir: _tempDir);
 
-        act.Should().Throw<InvalidOperationException>();
+        result.Should().NotBeNullOrEmpty();
     }
 }

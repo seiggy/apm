@@ -4,7 +4,6 @@ namespace Apm.Cli.Compilation;
 
 /// <summary>
 /// Builds template sections for AGENTS.md compilation.
-/// Stub interface — full implementation in a future wave.
 /// </summary>
 public interface ITemplateBuilder
 {

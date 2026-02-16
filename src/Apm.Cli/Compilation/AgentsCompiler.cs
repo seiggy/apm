@@ -13,9 +13,9 @@ public class AgentsCompiler
     private readonly string _baseDir;
     private readonly ITemplateBuilder _templateBuilder;
     private readonly ILinkResolver _linkResolver;
-    private readonly IClaudeFormatter? _claudeFormatter;
-    private readonly IDistributedCompiler? _distributedCompiler;
-    private readonly IConstitutionInjector? _constitutionInjector;
+    private readonly IClaudeFormatter _claudeFormatter;
+    private readonly IDistributedCompiler _distributedCompiler;
+    private readonly IConstitutionInjector _constitutionInjector;
 
     private readonly List<string> _warnings = [];
     private readonly List<string> _errors = [];
@@ -38,8 +38,8 @@ public class AgentsCompiler
         _baseDir = Path.GetFullPath(baseDir);
         _templateBuilder = templateBuilder ?? new TemplateBuilder();
         _linkResolver = linkResolver ?? new UnifiedLinkResolver(baseDir);
-        _claudeFormatter = claudeFormatter;
-        _distributedCompiler = distributedCompiler;
+        _claudeFormatter = claudeFormatter ?? new ClaudeFormatter(baseDir);
+        _distributedCompiler = distributedCompiler ?? new DistributedCompiler(baseDir);
         _constitutionInjector = constitutionInjector ?? new ConstitutionInjector(baseDir);
     }
 
@@ -97,17 +97,6 @@ public class AgentsCompiler
 
     private CompilationResult CompileDistributed(CompilationConfig config, PrimitiveCollection primitives)
     {
-        if (_distributedCompiler is null)
-        {
-            _errors.Add("Distributed compiler not available (not yet ported).");
-            return new CompilationResult
-            {
-                Success = false,
-                Warnings = [.. _warnings],
-                Errors = [.. _errors],
-            };
-        }
-
         var distributedConfig = new Dictionary<string, object>
         {
             ["min_instructions_per_file"] = config.MinInstructionsPerFile,
@@ -228,17 +217,6 @@ public class AgentsCompiler
 
     private CompilationResult CompileClaudeMd(CompilationConfig config, PrimitiveCollection primitives)
     {
-        if (_claudeFormatter is null || _distributedCompiler is null)
-        {
-            _errors.Add("Claude formatter or distributed compiler not available (not yet ported).");
-            return new CompilationResult
-            {
-                Success = false,
-                Warnings = [.. _warnings],
-                Errors = [.. _errors],
-            };
-        }
-
         var directoryMap = _distributedCompiler.AnalyzeDirectoryStructure(primitives.Instructions);
         var placements = _distributedCompiler.DetermineAgentsPlacement(
             primitives.Instructions,

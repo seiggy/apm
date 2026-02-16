@@ -4,7 +4,6 @@ namespace Apm.Cli.Compilation;
 
 /// <summary>
 /// Distributed AGENTS.md compilation following the Minimal Context Principle.
-/// Stub interface — full implementation in a future wave.
 /// </summary>
 public interface IDistributedCompiler
 {

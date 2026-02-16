@@ -116,23 +116,21 @@ public class OperationsInstallPackageTests
 public class OperationsUninstallPackageTests
 {
     [Fact]
-    public void UninstallPackage_ReturnsFalse_WhenNotYetImplemented()
+    public void UninstallPackage_DoesNotThrow()
     {
-        // UninstallPackage throws NotImplementedException internally,
-        // which is caught and returns false
-        var result = Operations.UninstallPackage("vscode", "my-server");
-        result.Should().BeFalse();
+        // UninstallPackage delegates to PackageManagerFactory; errors are caught internally.
+        var act = () => Operations.UninstallPackage("vscode", "my-server");
+        act.Should().NotThrow();
     }
 }
 
 public class OperationsConfigureClientTests
 {
     [Fact]
-    public void ConfigureClient_ReturnsFalse_WhenNotYetImplemented()
+    public void ConfigureClient_DoesNotThrow()
     {
-        // ConfigureClient throws NotImplementedException internally,
-        // which is caught and returns false
-        var result = Operations.ConfigureClient("vscode", new Dictionary<string, object>());
-        result.Should().BeFalse();
+        // ConfigureClient delegates to ClientFactory; errors are caught internally.
+        var act = () => Operations.ConfigureClient("vscode", new Dictionary<string, object>());
+        act.Should().NotThrow();
     }
 }

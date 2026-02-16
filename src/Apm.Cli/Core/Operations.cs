@@ -75,14 +75,8 @@ public static class Operations
     {
         try
         {
-            // TODO: Wire up ClientFactory and PackageManagerFactory when ported
-            // var client = ClientFactory.CreateClient(clientType);
-            // var packageManager = PackageManagerFactory.CreatePackageManager();
-            // var result = packageManager.Uninstall(packageName);
-            // Remove legacy config entries if they exist
-            // return result;
-            throw new NotImplementedException(
-                "UninstallPackage requires ClientFactory and PackageManagerFactory (not yet ported).");
+            var packageManager = PackageManagerFactory.CreatePackageManager();
+            return packageManager.Uninstall(packageName);
         }
         catch (Exception e)
         {
@@ -98,12 +92,9 @@ public static class Operations
     {
         try
         {
-            // TODO: Wire up ClientFactory when ported
-            // var client = ClientFactory.CreateClient(clientType);
-            // client.UpdateConfig(configUpdates);
-            // return true;
-            throw new NotImplementedException(
-                "ConfigureClient requires ClientFactory (not yet ported).");
+            var client = ClientFactory.CreateClient(clientType);
+            var updates = configUpdates.ToDictionary(kvp => kvp.Key, kvp => (object?)kvp.Value);
+            return client.UpdateConfig(updates);
         }
         catch (Exception e)
         {

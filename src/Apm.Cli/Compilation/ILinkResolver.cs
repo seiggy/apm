@@ -2,7 +2,6 @@ namespace Apm.Cli.Compilation;
 
 /// <summary>
 /// Resolves and validates markdown links in compiled output.
-/// Stub interface — full implementation in a future wave.
 /// </summary>
 public interface ILinkResolver
 {

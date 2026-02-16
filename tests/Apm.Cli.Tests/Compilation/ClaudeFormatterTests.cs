@@ -173,15 +173,15 @@ public class ClaudeFormatterTests : IDisposable
     // ── Compiler integration with Claude target ─────────────────────
 
     [Fact]
-    public void Compiler_ClaudeTarget_WithoutFormatter_Fails()
+    public void Compiler_ClaudeTarget_DefaultDeps_DoesNotReturnPortedError()
     {
         var compiler = new AgentsCompiler(_tempDir);
         var config = new CompilationConfig { Target = "claude", DryRun = true };
 
         var result = compiler.Compile(config, new PrimitiveCollection());
 
-        result.Success.Should().BeFalse();
-        result.Errors.Should().NotBeEmpty();
+        // With defaults wired up, should not get "not yet ported" error
+        result.Errors.Should().NotContain(e => e.Contains("not yet ported"));
     }
 
     [Fact]

@@ -2,7 +2,6 @@ namespace Apm.Cli.Compilation;
 
 /// <summary>
 /// Injects constitution content into compiled output.
-/// Stub interface — full implementation in a future wave.
 /// </summary>
 public interface IConstitutionInjector
 {

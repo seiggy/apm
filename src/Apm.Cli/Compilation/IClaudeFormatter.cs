@@ -4,7 +4,6 @@ namespace Apm.Cli.Compilation;
 
 /// <summary>
 /// Formats CLAUDE.md files following the Claude Memory documentation format.
-/// Stub interface — full implementation in a future wave.
 /// </summary>
 public interface IClaudeFormatter
 {
